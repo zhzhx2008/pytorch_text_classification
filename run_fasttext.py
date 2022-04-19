@@ -26,7 +26,7 @@ def build_dataset(data_path, num_char_no_split=False):
                 continue
             json_loads = json.loads(line)
             sentence = json_loads['sentence']
-            sentences_word.append(jieba.cut(sentence))
+            sentences_word.append(list(jieba.cut(sentence)))
             chars = ' '.join(list(sentence))
             if num_char_no_split:
                 res = re.search(r'([0-9a-zA-Z]\s){2,}', chars)
@@ -40,36 +40,61 @@ def build_dataset(data_path, num_char_no_split=False):
     return sentences_word, sentences_char, labels
 
 
-def build_vocab(sentences, max_size=None, min_freq=2):
-    vocab = {}
-    for sentence in sentences:
-        for word in sentence:
-            vocab[word] = vocab.get(word, 0) + 1
-    vocab_list = sorted([_ for _ in vocab.items() if _[1] >= min_freq], key=lambda x: x[1], reverse=True)
-    if max_size and max_size<len(vocab_list):
-        vocab_list = vocab_list[:max_size]
-    vocab_dic = {word_count[0]: idx for idx, word_count in enumerate(vocab_list)}
-    vocab_dic.update({UNK: len(vocab_dic), PAD: len(vocab_dic) + 1})
-    return vocab_dic
-
-
 def create_ngram(sent, ngram_value):
-    return set(zip(*[sent[i:] for i in range(ngram_value)]))
+    return list(zip(*[sent[i:] for i in range(ngram_value)]))
 
 
-def build_x_index(sentences, vocab, ngrams):
-    x_index_1_gram = [] # 1-gram necessary
+def build_x_index(sentences, ngrams, vocabs=None, max_size=None, min_freq=2):
+    if vocabs is None:
+        vocabs = []
+        idx_start = 0
+        for n in ngrams:
+            vocab = {}
+            for sentence in sentences:
+                ngram_line_list = create_ngram(sentence, n)
+                for ngram_word in ngram_line_list:
+                    vocab[ngram_word] = vocab.get(ngram_word, 0) + 1
+            vocab_list = sorted([_ for _ in vocab.items() if _[1] >= min_freq], key=lambda x: x[1], reverse=True)
+            if max_size and max_size < len(vocab_list):
+                vocab_list = vocab_list[:max_size]
+            vocab_dic = {word_count[0]: idx + idx_start for idx, word_count in enumerate(vocab_list)}
+            vocab_dic.update({UNK: len(vocab_dic) + idx_start})
+            vocabs.append(vocab_dic)
+            idx_start += len(vocab_dic)
+    x_index = []
     for sentence in sentences:
-        line_index = []
-        for word in sentence:
-            line_index.append(vocab.get(word))
-        x_index_1_gram.append(x_index_1_gram)
-    for n in ngrams:
-        pass
+        x_index_line = []
+        for idx, n in enumerate(ngrams):
+            vocab = vocabs[idx]
+            ngram_line_list = create_ngram(sentence, n)
+            if not ngram_line_list:
+                x_index_line.append(vocab.get(UNK))
+            for ngram_word in ngram_line_list:
+                x_index_line.append(vocab.get(ngram_word, vocab.get(UNK)))
+        x_index.append(x_index_line)
+    return x_index, vocabs
+
 
 
 
 if __name__ == '__main__':
+
+    # # test build n-gram x_index
+    # UNK, PAD = '<UNK>', '<PAD>'
+    # sentences = [
+    #     ['哈喽','大家','好','啊'],
+    #     ['哈哈', '呵呵'],
+    #     ['啊'],
+    # ]
+    # x_index, vocabs = build_x_index(sentences, [2,3], min_freq=1)
+    # sentences = [
+    #     ['哈喽', '好', '啊'],
+    #     ['哈哈', '呵呵', '嗯嗯'],
+    #     ['啊'],
+    # ]
+    # x_index_2, _ = build_x_index(sentences, [2,3], min_freq=1, vocabs=vocabs)
+    # exit(0)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument("--gpu", default="", type=str)
@@ -112,18 +137,19 @@ if __name__ == '__main__':
 
     MAX_VOCAB_SIZE = 10000
     UNK, PAD = '<UNK>', '<PAD>'
-    vocab_word_idx_dict, vocab_char_idx_dict = None, None
-    if 'word' in args.word_or_char:
-        vocab_word_idx_dict = build_vocab(data_train_word, max_size=args.number_words)
-    if 'char' in args.word_or_char:
-        vocab_char_idx_dict = build_vocab(data_train_char, max_size=args.number_chars)
 
     if args.word_ngram:
         ngrams = args.word_ngram
         ngrams.sort()
-        x_train_word_index_ngram = build_x_index(data_train_word, vocab_word_idx_dict, ngrams)
-        x_dev_word_index_ngram = build_x_index(data_dev_word, vocab_word_idx_dict, ngrams)
-        x_test_word_index_ngram = build_x_index(data_test_word, vocab_word_idx_dict, ngrams)
+        x_train_word_index_ngram, vocabs = build_x_index(data_train_word, ngrams, vocabs=None)
+        x_dev_word_index_ngram, _ = build_x_index(data_dev_word, ngrams, vocabs=vocabs)
+        x_test_word_index_ngram, _ = build_x_index(data_test_word, ngrams, vocabs=vocabs)
+    if args.char_ngram:
+        ngrams = args.char_ngram
+        ngrams.sort()
+        x_train_char_index_ngram, vocabs = build_x_index(data_train_char, ngrams, vocabs=None)
+        x_dev_char_index_ngram, _ = build_x_index(data_dev_char, ngrams, vocabs=vocabs)
+        x_test_char_index_ngram, _ = build_x_index(data_test_char, ngrams, vocabs=vocabs)
 
 
     end_time = time.time()
