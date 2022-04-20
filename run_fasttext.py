@@ -11,8 +11,10 @@ import jieba
 import re
 from sklearn.model_selection import train_test_split
 import torch
+import torch.nn as nn
 import torch.backends.cudnn
 import codecs
+from models.FastText import FastTextModel
 
 
 def build_dataset(data_path, num_char_no_split=False):
@@ -44,7 +46,7 @@ def create_ngram(sent, ngram_value):
     return list(zip(*[sent[i:] for i in range(ngram_value)]))
 
 
-def build_x_index(sentences, ngrams, vocabs=None, max_size=None, min_freq=2):
+def build_x_index(sentences, ngrams, vocabs=None, max_size=None, min_freq=1):
     if vocabs is None:
         vocabs = []
         idx_start = 0
@@ -75,6 +77,74 @@ def build_x_index(sentences, ngrams, vocabs=None, max_size=None, min_freq=2):
     return x_index, vocabs
 
 
+def row_concate(x1, x2, append_idx):
+    x = []
+    for idx, x1_row in enumerate(x1):
+        x_row = []
+        x_row.extend(x1_row)
+        x_row.extend(
+            [i + append_idx for i in x2[idx]]
+        )
+        x.append(x_row)
+    return x
+
+
+def sent_pad(x_index, max_sent_len, pad_value):
+    x_index_new = []
+    for x in x_index:
+        if len(x) < max_sent_len:
+            x.extend([pad_value] * (max_sent_len - len(x)))
+        elif len(x) > max_sent_len:
+            x = x[:max_sent_len]
+        x_index_new.append(x)
+    return x_index_new
+
+
+class DatasetIterater(object):
+    def __init__(self, batches, batch_size, device):
+        self.batch_size = batch_size
+        self.batches = batches
+        self.n_batches = len(batches) // batch_size
+        self.residue = False  # 记录batch数量是否为整数
+        if len(batches) % self.n_batches != 0:
+            self.residue = True
+        self.index = 0
+        self.device = device
+
+    def _to_tensor(self, datas):
+        x = torch.LongTensor(datas[0]).to(self.device)
+        y = torch.FloatTensor(datas[1]).to(self.device)
+        return x, y
+
+    def __next__(self):
+        if self.residue and self.index == self.n_batches:
+            batches = self.batches[self.index * self.batch_size: len(self.batches)]
+            self.index += 1
+            batches = self._to_tensor(batches)
+            return batches
+
+        elif self.index >= self.n_batches:
+            self.index = 0
+            raise StopIteration
+        else:
+            batches = self.batches[self.index * self.batch_size: (self.index + 1) * self.batch_size]
+            self.index += 1
+            batches = self._to_tensor(batches)
+            return batches
+
+    def __iter__(self):
+        return self
+
+    def __len__(self):
+        if self.residue:
+            return self.n_batches + 1
+        else:
+            return self.n_batches
+
+
+def to_categorical(y, num_classes):
+    """ 1-hot encodes a tensor """
+    return np.eye(num_classes, dtype='uint8')[y]
 
 
 if __name__ == '__main__':
@@ -98,23 +168,21 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument("--gpu", default="", type=str)
-    parser.add_argument("--word_or_char", default="word", type=str)     # word,char,word_and_char
-    parser.add_argument("--word_ngram", type=list, nargs='*')
-    parser.add_argument("--char_ngram", type=list, nargs='*')
-    parser.add_argument("--monitor", default="val_loss", type=str)
-    parser.add_argument('--patience', default=5, type=int)
-    parser.add_argument('--batch_size', default=32, type=int)
-    parser.add_argument('--epochs', default=1000, type=int)
-    parser.add_argument("--embedding_file", default='', type=str)
-    parser.add_argument('--number_words', default=sys.maxsize, type=int)
-    parser.add_argument('--number_chars', default=sys.maxsize, type=int)
-    parser.add_argument("--trainable", action='store_true')
-    parser.add_argument("--class_weights", action='store_true')
+    # parser.add_argument("--word_or_char", default="word_and_char", type=str)     # word,char,word_and_char
+    parser.add_argument("--ngrams_word", default=[1,2], type=list, nargs='*')
+    parser.add_argument("--ngrams_char", default=[1,2], type=list, nargs='*')
+    parser.add_argument('--batch_size', default=2, type=int)
+    parser.add_argument('--epochs', default=2, type=int)
+    # parser.add_argument("--embedding_file", default='', type=str)
+    # parser.add_argument('--number_words', default=sys.maxsize, type=int)
+    # parser.add_argument('--number_chars', default=sys.maxsize, type=int)
+    # parser.add_argument("--trainable", action='store_true')
+    # parser.add_argument("--class_weights", action='store_true')
     parser.add_argument("--num_char_no_split", action='store_true')
-    parser.add_argument("--max_word_length", default=sys.maxsize, type=int)
+    # parser.add_argument("--max_word_length", default=sys.maxsize, type=int)
     args, _ = parser.parse_known_args()
     print(args)
-    exit(0)
+    # exit(0)
 
     seed = args.seed
     random.seed(seed)
@@ -124,33 +192,189 @@ if __name__ == '__main__':
     torch.backends.cudnn.deterministic = True
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     start_time = time.time()
     print("loading data...")
-    data_train = './data/tnews_public/train.json'
-    data_test = './data/tnews_public/dev.json'  # test.json has no label, using dev.json repalced.
+    data_train = './data/tnews_public/train_test.json'
+    data_test = './data/tnews_public/test_test.json'  # test.json has no label, using dev.json repalced.
     sentences_word, sentences_char, labels = build_dataset(data_train, num_char_no_split=args.num_char_no_split)
     data_train_word, data_dev_word, data_train_char, data_dev_char, labels_train, labels_dev = train_test_split(
-        sentences_word, sentences_char, labels, test_size=0.1, shuffle=True, stratify=labels
+        sentences_word, sentences_char, labels, test_size=0.4, shuffle=True, stratify=labels
     )
     data_test_word, data_test_char, labels_test = build_dataset(data_test, num_char_no_split=args.num_char_no_split)
 
-    MAX_VOCAB_SIZE = 10000
+    labels_index_dict = {}
+    index_labels_dict = {}
+    labels_train_set = set(labels_train)
+    num_classes = len(labels_train_set)
+    for label in labels_train_set:
+        labels_index_dict[label] = len(labels_index_dict)
+    index_labels_dict = {v: k for k, v in labels_index_dict.items()}
+    print('labels_index_dict={}'.format(labels_index_dict))
+    print('index_labels_dict={}'.format(index_labels_dict))
+    y_train_index = [labels_index_dict[x] for x in labels_train]
+    y_dev_index = [labels_index_dict[x] for x in labels_dev]
+    y_test_index = [labels_index_dict[x] for x in labels_test]
+    y_train_index = to_categorical(y_train_index, num_classes)
+    y_dev_index = to_categorical(y_dev_index, num_classes)
+    y_test_index = to_categorical(y_test_index, num_classes)
+
+    # MAX_VOCAB_SIZE = 10000
     UNK, PAD = '<UNK>', '<PAD>'
 
-    if args.word_ngram:
-        ngrams = args.word_ngram
-        ngrams.sort()
-        x_train_word_index_ngram, vocabs = build_x_index(data_train_word, ngrams, vocabs=None)
-        x_dev_word_index_ngram, _ = build_x_index(data_dev_word, ngrams, vocabs=vocabs)
-        x_test_word_index_ngram, _ = build_x_index(data_test_word, ngrams, vocabs=vocabs)
-    if args.char_ngram:
-        ngrams = args.char_ngram
-        ngrams.sort()
-        x_train_char_index_ngram, vocabs = build_x_index(data_train_char, ngrams, vocabs=None)
-        x_dev_char_index_ngram, _ = build_x_index(data_dev_char, ngrams, vocabs=vocabs)
-        x_test_char_index_ngram, _ = build_x_index(data_test_char, ngrams, vocabs=vocabs)
+    x_train_index = None
+    x_dev_index = None
+    x_test_index = None
+    vocabs_word = None
+    vocabs_char = None
+    ngrams_word = None
+    if args.ngrams_word:
+        ngrams_word = args.ngrams_word
+        ngrams_word.sort()
+    ngrams_char = None
+    if args.ngrams_char:
+        ngrams_char = args.ngrams_char
+        ngrams_char.sort()
 
+    if args.ngrams_word and args.ngrams_char:
+        x_train_word_index_ngram, vocabs_word = build_x_index(data_train_word, ngrams_word, vocabs=vocabs_word)
+        x_dev_word_index_ngram, _ = build_x_index(data_dev_word, ngrams_word, vocabs=vocabs_word)
+        x_test_word_index_ngram, _ = build_x_index(data_test_word, ngrams_word, vocabs=vocabs_word)
+
+        x_train_char_index_ngram, vocabs_char = build_x_index(data_train_char, ngrams_char, vocabs=vocabs_char)
+        x_dev_char_index_ngram, _ = build_x_index(data_dev_char, ngrams_char, vocabs=vocabs_char)
+        x_test_char_index_ngram, _ = build_x_index(data_test_char, ngrams_char, vocabs=vocabs_char)
+
+        append_idx = 0
+        for v in vocabs_word:
+            append_idx += len(v)
+
+        x_train_index = row_concate(x_train_word_index_ngram, x_train_char_index_ngram, append_idx)
+        x_dev_index = row_concate(x_dev_word_index_ngram, x_dev_char_index_ngram, append_idx)
+        x_test_index = row_concate(x_test_word_index_ngram, x_test_char_index_ngram, append_idx)
+    elif args.ngrams_word:
+        x_train_index, vocabs_word = build_x_index(data_train_word, ngrams_word, vocabs=vocabs_word)
+        x_dev_index, _ = build_x_index(data_dev_word, ngrams_word, vocabs=vocabs_word)
+        x_test_index, _ = build_x_index(data_test_word, ngrams_word, vocabs=vocabs_word)
+    elif args.ngrams_char:
+        x_train_index, vocabs_char = build_x_index(data_train_char, ngrams_char, vocabs=vocabs_char)
+        x_dev_index, _ = build_x_index(data_dev_char, ngrams_char, vocabs=vocabs_char)
+        x_test_index, _ = build_x_index(data_test_char, ngrams_char, vocabs=vocabs_char)
+    else:
+        print('error, ngrams_word or ngrams_char necessary!')
+
+    max_sent_len = 0
+    for i in x_train_index:
+        if len(i) > max_sent_len:
+            max_sent_len = len(i)
+
+    pad_index = 0
+    if args.ngrams_word:
+        for v in vocabs_word:
+            pad_index += len(v)
+    if args.ngrams_char:
+        for v in vocabs_char:
+            pad_index += len(v)
+
+    x_train_index = sent_pad(x_train_index, max_sent_len, pad_index)
+    x_dev_index = sent_pad(x_dev_index, max_sent_len, pad_index)
+    x_test_index = sent_pad(x_test_index, max_sent_len, pad_index)
+
+    model = FastTextModel(pad_index + 1, 300, 0.2, num_classes)
+    print(model)
+    model = model.to(device)
+    learning_rate = 0.1
+    best_acc = 0
+    start_epoch = 0
+
+    resume = False
+    if resume:
+        assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+        checkpoint = torch.load('./checkpoint/ckpt.pth')
+        model.load_state_dict(checkpoint['model'])
+        best_acc = checkpoint['acc']
+        start_epoch = checkpoint['epoch']
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+    epoch = 10
+    for epoch in range(start_epoch, start_epoch + epoch):
+        # trainset
+        model.train()
+        train_loss = 0.0
+        train_correct = 0
+        train_total = 0
+        train_batch = 0
+        # for batch_idx, (inputs, targets) in enumerate(trainloader):
+        for batch_idx, (inputs, targets) in enumerate(
+                DatasetIterater((x_train_index, y_train_index), batch_size=args.batch_size, device=device)
+        ):
+            inputs, targets = inputs.to(device), targets.to(device)
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+            loss.backward()
+            optimizer.step()
+
+            train_loss += loss.item()
+            _, predicted = outputs.max(1)
+            train_total += targets.size(0)
+            train_correct += predicted.eq(torch.argmax(targets, dim=1)).sum().item()
+
+            train_batch = batch_idx + 1
+
+            # # test
+            # if batch_idx >= 2:
+            #     break
+
+        # testset
+        model.eval()
+        test_loss = 0.0
+        test_correct = 0
+        test_total = 0
+        test_batch = 0
+        # for batch_idx, (inputs, targets) in enumerate(testloader):
+        for batch_idx, (inputs, targets) in enumerate(
+                DatasetIterater((x_dev_index, y_dev_index), batch_size=args.batch_size, device=device)
+        ):
+            inputs, targets = inputs.to(device), targets.to(device)
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+
+            test_loss += loss.item()
+            _, predicted = outputs.max(1)
+            test_total += targets.size(0)
+            test_correct += predicted.eq(torch.argmax(targets, dim=1)).sum().item()
+
+            test_batch = batch_idx + 1
+
+            # # test
+            # if batch_idx >= 2:
+            #     break
+
+        print('epoch: {}/{}, train loss={:.4f}, train acc={:.2f}%, test loss={:.4f}, test acc={:.2f}%'.format(
+            epoch + 1, start_epoch + 200,
+            train_loss / train_batch, train_correct * 100.0 / train_total,
+            test_loss / test_batch, test_correct * 100.0 / test_total
+        ))
+
+        # save best acc
+        test_acc = test_correct * 1.0 / test_total
+        if test_acc > best_acc:
+            print('saving...')
+            state = {
+                'model': model.state_dict(),
+                'acc': test_acc,
+                'epoch': epoch,
+            }
+            if not os.path.isdir('checkpoint'):
+                os.mkdir('checkpoint')
+            torch.save(state, './checkpoint/ckpt.pth')
+            best_acc = test_acc
+
+        scheduler.step()
 
     end_time = time.time()
     print('time used={:.1f}s'.format(end_time - start_time))
