@@ -46,19 +46,21 @@ def create_ngram(sent, ngram_value):
     return list(zip(*[sent[i:] for i in range(ngram_value)]))
 
 
-def build_x_index(sentences, ngrams, vocabs=None, max_size=None, min_freq=1):
-    if vocabs is None:
+def build_x_index(sentences, ngrams, vocabs=None, idx_start=0, max_size=None, min_freq=None):
+    if not vocabs:
         vocabs = []
-        idx_start = 0
-        for n in ngrams:
+        # idx_start = 0
+        for idx, n in enumerate(ngrams):
             vocab = {}
             for sentence in sentences:
                 ngram_line_list = create_ngram(sentence, n)
                 for ngram_word in ngram_line_list:
                     vocab[ngram_word] = vocab.get(ngram_word, 0) + 1
-            vocab_list = sorted([_ for _ in vocab.items() if _[1] >= min_freq], key=lambda x: x[1], reverse=True)
-            if max_size and max_size < len(vocab_list):
-                vocab_list = vocab_list[:max_size]
+            min_freq_cur = 1
+            if min_freq: min_freq_cur = min_freq[idx]
+            vocab_list = sorted([_ for _ in vocab.items() if _[1] >= min_freq_cur], key=lambda x: x[1], reverse=True)
+            if max_size and max_size[idx] < len(vocab_list):
+                vocab_list = vocab_list[:max_size[idx]]
             vocab_dic = {word_count[0]: idx + idx_start for idx, word_count in enumerate(vocab_list)}
             vocab_dic.update({UNK: len(vocab_dic) + idx_start})
             vocabs.append(vocab_dic)
@@ -77,13 +79,13 @@ def build_x_index(sentences, ngrams, vocabs=None, max_size=None, min_freq=1):
     return x_index, vocabs
 
 
-def row_concate(x1, x2, append_idx):
+def row_concate(x1, x2):
     x = []
     for idx, x1_row in enumerate(x1):
         x_row = []
         x_row.extend(x1_row)
         x_row.extend(
-            [i + append_idx for i in x2[idx]]
+            x2[idx]
         )
         x.append(x_row)
     return x
@@ -101,35 +103,38 @@ def sent_pad(x_index, max_sent_len, pad_value):
 
 
 class DatasetIterater(object):
-    def __init__(self, batches, batch_size, device):
+    def __init__(self, inputs, targets, batch_size, device):
         self.batch_size = batch_size
-        self.batches = batches
-        self.n_batches = len(batches) // batch_size
+        self.inputs = inputs
+        self.targets = targets
+        self.n_batches = len(inputs) // batch_size
         self.residue = False  # 记录batch数量是否为整数
-        if len(batches) % self.n_batches != 0:
+        if len(inputs) % self.n_batches != 0:
             self.residue = True
         self.index = 0
         self.device = device
 
-    def _to_tensor(self, datas):
-        x = torch.LongTensor(datas[0]).to(self.device)
-        y = torch.FloatTensor(datas[1]).to(self.device)
+    def _to_tensor(self, inputs, targets):
+        x = torch.LongTensor(inputs).to(self.device)
+        y = torch.FloatTensor(targets).to(self.device)
         return x, y
 
     def __next__(self):
         if self.residue and self.index == self.n_batches:
-            batches = self.batches[self.index * self.batch_size: len(self.batches)]
+            batches_inputs = self.inputs[self.index * self.batch_size: len(self.inputs)]
+            batches_targets = self.targets[self.index * self.batch_size: len(self.targets)]
             self.index += 1
-            batches = self._to_tensor(batches)
+            batches = self._to_tensor(batches_inputs, batches_targets)
             return batches
 
         elif self.index >= self.n_batches:
             self.index = 0
             raise StopIteration
         else:
-            batches = self.batches[self.index * self.batch_size: (self.index + 1) * self.batch_size]
+            batches_inputs = self.inputs[self.index * self.batch_size: (self.index + 1) * self.batch_size]
+            batches_targets = self.targets[self.index * self.batch_size: (self.index + 1) * self.batch_size]
             self.index += 1
-            batches = self._to_tensor(batches)
+            batches = self._to_tensor(batches_inputs, batches_targets)
             return batches
 
     def __iter__(self):
@@ -168,18 +173,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument("--gpu", default="", type=str)
-    # parser.add_argument("--word_or_char", default="word_and_char", type=str)     # word,char,word_and_char
     parser.add_argument("--ngrams_word", default=[1,2], type=list, nargs='*')
+    parser.add_argument("--min_freq_word", default=[3,2], type=list, nargs='*')
+    parser.add_argument("--max_size_word", type=list, nargs='*')
     parser.add_argument("--ngrams_char", default=[1,2], type=list, nargs='*')
-    parser.add_argument('--batch_size', default=2, type=int)
-    parser.add_argument('--epochs', default=2, type=int)
-    # parser.add_argument("--embedding_file", default='', type=str)
-    # parser.add_argument('--number_words', default=sys.maxsize, type=int)
-    # parser.add_argument('--number_chars', default=sys.maxsize, type=int)
-    # parser.add_argument("--trainable", action='store_true')
-    # parser.add_argument("--class_weights", action='store_true')
+    parser.add_argument("--min_freq_char", default=[2,2], type=list, nargs='*')
+    parser.add_argument("--max_size_char", type=list, nargs='*')
+    parser.add_argument('--batch_size', default=32, type=int)
+    parser.add_argument('--epochs', default=200, type=int)
     parser.add_argument("--num_char_no_split", action='store_true')
-    # parser.add_argument("--max_word_length", default=sys.maxsize, type=int)
+    parser.add_argument('--max_sent_len', type=int)
     args, _ = parser.parse_known_args()
     print(args)
     # exit(0)
@@ -193,16 +196,21 @@ if __name__ == '__main__':
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    print('device={}'.format(device))
 
     start_time = time.time()
     print("loading data...")
-    data_train = './data/tnews_public/train_test.json'
-    data_test = './data/tnews_public/test_test.json'  # test.json has no label, using dev.json repalced.
+    data_train = './data/tnews_public/train.json'
+    data_test = './data/tnews_public/dev.json'  # test.json has no label, using dev.json repalced.
     sentences_word, sentences_char, labels = build_dataset(data_train, num_char_no_split=args.num_char_no_split)
     data_train_word, data_dev_word, data_train_char, data_dev_char, labels_train, labels_dev = train_test_split(
-        sentences_word, sentences_char, labels, test_size=0.4, shuffle=True, stratify=labels
+        sentences_word, sentences_char, labels, test_size=0.1, shuffle=True, stratify=labels
     )
     data_test_word, data_test_char, labels_test = build_dataset(data_test, num_char_no_split=args.num_char_no_split)
+
+    print('train size={}'.format(len(data_train_word)))
+    print('dev size={}'.format(len(data_dev_word)))
+    print('test size={}'.format(len(data_test_word)))
 
     labels_index_dict = {}
     index_labels_dict = {}
@@ -213,6 +221,7 @@ if __name__ == '__main__':
     index_labels_dict = {v: k for k, v in labels_index_dict.items()}
     print('labels_index_dict={}'.format(labels_index_dict))
     print('index_labels_dict={}'.format(index_labels_dict))
+
     y_train_index = [labels_index_dict[x] for x in labels_train]
     y_dev_index = [labels_index_dict[x] for x in labels_dev]
     y_test_index = [labels_index_dict[x] for x in labels_test]
@@ -226,8 +235,8 @@ if __name__ == '__main__':
     x_train_index = None
     x_dev_index = None
     x_test_index = None
-    vocabs_word = None
-    vocabs_char = None
+    vocabs_word = []
+    vocabs_char = []
     ngrams_word = None
     if args.ngrams_word:
         ngrams_word = args.ngrams_word
@@ -238,29 +247,39 @@ if __name__ == '__main__':
         ngrams_char.sort()
 
     if args.ngrams_word and args.ngrams_char:
-        x_train_word_index_ngram, vocabs_word = build_x_index(data_train_word, ngrams_word, vocabs=vocabs_word)
-        x_dev_word_index_ngram, _ = build_x_index(data_dev_word, ngrams_word, vocabs=vocabs_word)
-        x_test_word_index_ngram, _ = build_x_index(data_test_word, ngrams_word, vocabs=vocabs_word)
-
-        x_train_char_index_ngram, vocabs_char = build_x_index(data_train_char, ngrams_char, vocabs=vocabs_char)
-        x_dev_char_index_ngram, _ = build_x_index(data_dev_char, ngrams_char, vocabs=vocabs_char)
-        x_test_char_index_ngram, _ = build_x_index(data_test_char, ngrams_char, vocabs=vocabs_char)
+        x_train_word_index_ngram, vocabs_word = build_x_index(data_train_word, ngrams_word, vocabs=vocabs_word,
+                                                              max_size=args.max_size_word, min_freq=args.min_freq_word)
+        x_dev_word_index_ngram, _ = build_x_index(data_dev_word, ngrams_word, vocabs=vocabs_word,
+                                                  max_size=args.max_size_word, min_freq=args.min_freq_word)
+        x_test_word_index_ngram, _ = build_x_index(data_test_word, ngrams_word, vocabs=vocabs_word,
+                                                   max_size=args.max_size_word, min_freq=args.min_freq_word)
 
         append_idx = 0
         for v in vocabs_word:
             append_idx += len(v)
 
-        x_train_index = row_concate(x_train_word_index_ngram, x_train_char_index_ngram, append_idx)
-        x_dev_index = row_concate(x_dev_word_index_ngram, x_dev_char_index_ngram, append_idx)
-        x_test_index = row_concate(x_test_word_index_ngram, x_test_char_index_ngram, append_idx)
+        x_train_char_index_ngram, vocabs_char = build_x_index(data_train_char, ngrams_char, vocabs=vocabs_char,
+                                                              idx_start=append_idx,
+                                                              max_size=args.max_size_char, min_freq=args.min_freq_char)
+        x_dev_char_index_ngram, _ = build_x_index(data_dev_char, ngrams_char, vocabs=vocabs_char,
+                                                  max_size=args.max_size_char, min_freq=args.min_freq_char)
+        x_test_char_index_ngram, _ = build_x_index(data_test_char, ngrams_char, vocabs=vocabs_char,
+                                                   max_size=args.max_size_char, min_freq=args.min_freq_char)
+
+        x_train_index = row_concate(x_train_word_index_ngram, x_train_char_index_ngram)
+        x_dev_index = row_concate(x_dev_word_index_ngram, x_dev_char_index_ngram)
+        x_test_index = row_concate(x_test_word_index_ngram, x_test_char_index_ngram)
     elif args.ngrams_word:
-        x_train_index, vocabs_word = build_x_index(data_train_word, ngrams_word, vocabs=vocabs_word)
-        x_dev_index, _ = build_x_index(data_dev_word, ngrams_word, vocabs=vocabs_word)
-        x_test_index, _ = build_x_index(data_test_word, ngrams_word, vocabs=vocabs_word)
+        x_train_index, vocabs_word = build_x_index(data_train_word, ngrams_word, vocabs=vocabs_word,
+                                                   max_size=args.max_size_word, min_freq=args.min_freq_word)
+        x_dev_index, _ = build_x_index(data_dev_word, ngrams_word, vocabs=vocabs_word,
+                                       max_size=args.max_size_word, min_freq=args.min_freq_word)
+        x_test_index, _ = build_x_index(data_test_word, ngrams_word, vocabs=vocabs_word,
+                                        max_size=args.max_size_word, min_freq=args.min_freq_word)
     elif args.ngrams_char:
-        x_train_index, vocabs_char = build_x_index(data_train_char, ngrams_char, vocabs=vocabs_char)
-        x_dev_index, _ = build_x_index(data_dev_char, ngrams_char, vocabs=vocabs_char)
-        x_test_index, _ = build_x_index(data_test_char, ngrams_char, vocabs=vocabs_char)
+        x_train_index, vocabs_char = build_x_index(data_train_char, ngrams_char, vocabs=vocabs_char, max_size=args.max_size_char, min_freq=args.min_freq_char)
+        x_dev_index, _ = build_x_index(data_dev_char, ngrams_char, vocabs=vocabs_char, max_size=args.max_size_char, min_freq=args.min_freq_char)
+        x_test_index, _ = build_x_index(data_test_char, ngrams_char, vocabs=vocabs_char, max_size=args.max_size_char, min_freq=args.min_freq_char)
     else:
         print('error, ngrams_word or ngrams_char necessary!')
 
@@ -268,14 +287,21 @@ if __name__ == '__main__':
     for i in x_train_index:
         if len(i) > max_sent_len:
             max_sent_len = len(i)
+    print('max_sent_len={}'.format(max_sent_len))
+    if args.max_sent_len:
+        max_sent_len = args.max_sent_len
+        print('max_sent_len={}'.format(max_sent_len))
 
     pad_index = 0
     if args.ngrams_word:
-        for v in vocabs_word:
+        for idx, v in enumerate(vocabs_word):
+            print('vocabs_word_{} size={}'.format(idx, len(v)))
             pad_index += len(v)
     if args.ngrams_char:
-        for v in vocabs_char:
+        for idx, v in enumerate(vocabs_char):
+            print('vocabs_char_{} size={}'.format(idx, len(v)))
             pad_index += len(v)
+    print('pad_index={}'.format(pad_index))
 
     x_train_index = sent_pad(x_train_index, max_sent_len, pad_index)
     x_dev_index = sent_pad(x_dev_index, max_sent_len, pad_index)
@@ -284,23 +310,22 @@ if __name__ == '__main__':
     model = FastTextModel(pad_index + 1, 300, 0.2, num_classes)
     print(model)
     model = model.to(device)
-    learning_rate = 0.1
+    learning_rate = 0.01
     best_acc = 0
     start_epoch = 0
 
-    resume = False
-    if resume:
-        assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-        checkpoint = torch.load('./checkpoint/ckpt.pth')
-        model.load_state_dict(checkpoint['model'])
-        best_acc = checkpoint['acc']
-        start_epoch = checkpoint['epoch']
+    # resume = False
+    # if resume:
+    #     assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+    #     checkpoint = torch.load('./checkpoint/ckpt.pth')
+    #     model.load_state_dict(checkpoint['model'])
+    #     best_acc = checkpoint['acc']
+    #     start_epoch = checkpoint['epoch']
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
-    epoch = 10
-    for epoch in range(start_epoch, start_epoch + epoch):
+    for epoch in range(start_epoch, start_epoch + args.epochs):
         # trainset
         model.train()
         train_loss = 0.0
@@ -309,7 +334,7 @@ if __name__ == '__main__':
         train_batch = 0
         # for batch_idx, (inputs, targets) in enumerate(trainloader):
         for batch_idx, (inputs, targets) in enumerate(
-                DatasetIterater((x_train_index, y_train_index), batch_size=args.batch_size, device=device)
+                DatasetIterater(x_train_index, y_train_index, batch_size=args.batch_size, device=device)
         ):
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
@@ -337,7 +362,7 @@ if __name__ == '__main__':
         test_batch = 0
         # for batch_idx, (inputs, targets) in enumerate(testloader):
         for batch_idx, (inputs, targets) in enumerate(
-                DatasetIterater((x_dev_index, y_dev_index), batch_size=args.batch_size, device=device)
+                DatasetIterater(x_dev_index, y_dev_index, batch_size=args.batch_size, device=device)
         ):
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
@@ -355,7 +380,7 @@ if __name__ == '__main__':
             #     break
 
         print('epoch: {}/{}, train loss={:.4f}, train acc={:.2f}%, test loss={:.4f}, test acc={:.2f}%'.format(
-            epoch + 1, start_epoch + 200,
+            epoch + 1, start_epoch + args.epochs,
             train_loss / train_batch, train_correct * 100.0 / train_total,
             test_loss / test_batch, test_correct * 100.0 / test_total
         ))
