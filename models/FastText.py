@@ -1,4 +1,5 @@
 # coding=utf-8
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -26,7 +27,6 @@ class FastTextModel(nn.Module):
         out = F.relu(out)
         out = self.droupout(out)
         out = self.fc2(out)
-        out = F.softmax(out, dim=1)
         return out
 
 

@@ -15,6 +15,9 @@ import torch.nn as nn
 import torch.backends.cudnn
 import codecs
 from models.FastText import FastTextModel
+from models.TextCNN1D import TextCNN1DModel
+from models.TextCNN2D import TextCNN2DModel
+from models.TextLSTM import TextLSTMModel
 
 
 def build_dataset(data_path, num_char_no_split=False):
@@ -173,16 +176,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument("--gpu", default="", type=str)
-    parser.add_argument("--ngrams_word", default=[1,2], type=list, nargs='*')
-    parser.add_argument("--min_freq_word", default=[3,2], type=list, nargs='*')
-    parser.add_argument("--max_size_word", type=list, nargs='*')
-    parser.add_argument("--ngrams_char", default=[1,2], type=list, nargs='*')
-    parser.add_argument("--min_freq_char", default=[2,2], type=list, nargs='*')
-    parser.add_argument("--max_size_char", type=list, nargs='*')
+    parser.add_argument("--ngrams_word", type=int, nargs='*')
+    parser.add_argument("--min_freq_word", type=int, nargs='*')
+    parser.add_argument("--max_size_word", type=int, nargs='*')
+    parser.add_argument("--ngrams_char", type=int, nargs='*')
+    parser.add_argument("--min_freq_char", type=int, nargs='*')
+    parser.add_argument("--max_size_char", type=int, nargs='*')
     parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--epochs', default=200, type=int)
     parser.add_argument("--num_char_no_split", action='store_true')
     parser.add_argument('--max_sent_len', type=int)
+    parser.add_argument('--learning_rate', default=1e-3, type=float)
     args, _ = parser.parse_known_args()
     print(args)
     # exit(0)
@@ -308,9 +312,12 @@ if __name__ == '__main__':
     x_test_index = sent_pad(x_test_index, max_sent_len, pad_index)
 
     model = FastTextModel(pad_index + 1, 300, 0.2, num_classes)
+    # model = TextCNN1DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
+    # model = TextCNN2DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
+    # model = TextLSTMModel(pad_index + 1, 300, 256, 2, 0.2, num_classes)
     print(model)
     model = model.to(device)
-    learning_rate = 0.01
+    learning_rate = args.learning_rate
     best_acc = 0
     start_epoch = 0
 
@@ -323,8 +330,8 @@ if __name__ == '__main__':
     #     start_epoch = checkpoint['epoch']
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
     for epoch in range(start_epoch, start_epoch + args.epochs):
         # trainset
         model.train()
@@ -354,13 +361,13 @@ if __name__ == '__main__':
             # if batch_idx >= 2:
             #     break
 
-        # testset
+        # devset
         model.eval()
-        test_loss = 0.0
-        test_correct = 0
-        test_total = 0
-        test_batch = 0
-        # for batch_idx, (inputs, targets) in enumerate(testloader):
+        dev_loss = 0.0
+        dev_correct = 0
+        dev_total = 0
+        dev_batch = 0
+        # for batch_idx, (inputs, targets) in enumerate(devloader):
         for batch_idx, (inputs, targets) in enumerate(
                 DatasetIterater(x_dev_index, y_dev_index, batch_size=args.batch_size, device=device)
         ):
@@ -368,38 +375,62 @@ if __name__ == '__main__':
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
-            test_loss += loss.item()
+            dev_loss += loss.item()
             _, predicted = outputs.max(1)
-            test_total += targets.size(0)
-            test_correct += predicted.eq(torch.argmax(targets, dim=1)).sum().item()
+            dev_total += targets.size(0)
+            dev_correct += predicted.eq(torch.argmax(targets, dim=1)).sum().item()
 
-            test_batch = batch_idx + 1
+            dev_batch = batch_idx + 1
 
-            # # test
+            # # dev
             # if batch_idx >= 2:
             #     break
 
-        print('epoch: {}/{}, train loss={:.4f}, train acc={:.2f}%, test loss={:.4f}, test acc={:.2f}%'.format(
+        print('epoch: {}/{}, train loss={:.4f}, train acc={:.2f}%, dev loss={:.4f}, dev acc={:.2f}%'.format(
             epoch + 1, start_epoch + args.epochs,
             train_loss / train_batch, train_correct * 100.0 / train_total,
-            test_loss / test_batch, test_correct * 100.0 / test_total
+            dev_loss / dev_batch, dev_correct * 100.0 / dev_total
         ))
 
         # save best acc
-        test_acc = test_correct * 1.0 / test_total
-        if test_acc > best_acc:
-            print('saving...')
-            state = {
-                'model': model.state_dict(),
-                'acc': test_acc,
-                'epoch': epoch,
-            }
-            if not os.path.isdir('checkpoint'):
-                os.mkdir('checkpoint')
-            torch.save(state, './checkpoint/ckpt.pth')
-            best_acc = test_acc
+        dev_acc = dev_correct * 1.0 / dev_total
+        if dev_acc > best_acc:
+            # print('saving...')
+            # state = {
+            #     'model': model.state_dict(),
+            #     'acc': dev_acc,
+            #     'epoch': epoch,
+            # }
+            # if not os.path.isdir('checkpoint'):
+            #     os.mkdir('checkpoint')
+            # torch.save(state, './checkpoint/ckpt.pth')
+            best_acc = dev_acc
 
-        scheduler.step()
+            # testset
+            test_loss = 0.0
+            test_correct = 0
+            test_total = 0
+            test_batch = 0
+            # for batch_idx, (inputs, targets) in enumerate(testloader):
+            for batch_idx, (inputs, targets) in enumerate(
+                    DatasetIterater(x_test_index, y_test_index, batch_size=args.batch_size, device=device)
+            ):
+                inputs, targets = inputs.to(device), targets.to(device)
+                outputs = model(inputs)
+                loss = criterion(outputs, targets)
+
+                test_loss += loss.item()
+                _, predicted = outputs.max(1)
+                test_total += targets.size(0)
+                test_correct += predicted.eq(torch.argmax(targets, dim=1)).sum().item()
+
+                test_batch = batch_idx + 1
+
+            print('saving, test loss={:.4f}, test acc={:.2f}%'.format(
+                test_loss / test_batch, test_correct * 100.0 / test_total
+            ))
+
+        # scheduler.step()
 
     end_time = time.time()
     print('time used={:.1f}s'.format(end_time - start_time))
