@@ -16,13 +16,13 @@ class FastTextModel(nn.Module):
     def forward(self, x):
         out = self.embeding(x)
 
-        # SpatialDroupout
-        out = out.permute(0, 2, 1)  # convert to [batch, channels, time]
-        out = F.dropout2d(out, 0.2, training=True)
-        out = out.permute(0, 2, 1)  # back to [batch, time, channels]
+        # # SpatialDroupout
+        # out = out.permute(0, 2, 1)  # convert to [batch, channels, time]
+        # out = F.dropout2d(out, 0.2, training=True)
+        # out = out.permute(0, 2, 1)  # back to [batch, time, channels]
 
-        # out = out.mean(dim=1)
-        out = out.max(dim=1).values
+        out = out.mean(dim=1)
+        # out = out.max(dim=1).values
         out = self.fc1(out)
         out = F.relu(out)
         out = self.droupout(out)

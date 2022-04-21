@@ -155,6 +155,15 @@ def to_categorical(y, num_classes):
     return np.eye(num_classes, dtype='uint8')[y]
 
 
+def cal_sent_len(x_index, max_len=0.9):
+    max_sent_len = 0
+    for i in x_train_index:
+        if len(i) > max_sent_len:
+            max_sent_len = len(i)
+    x_index_len = len(x_index)
+    x_index_len_cover = int(round(x_index_len * 1.0 * max_len, 0))
+
+
 if __name__ == '__main__':
 
     # # test build n-gram x_index
@@ -287,7 +296,7 @@ if __name__ == '__main__':
     else:
         print('error, ngrams_word or ngrams_char necessary!')
 
-    max_sent_len = 0
+    max_sent_len = 0    # default max len
     for i in x_train_index:
         if len(i) > max_sent_len:
             max_sent_len = len(i)
