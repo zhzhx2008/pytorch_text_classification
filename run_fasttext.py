@@ -155,13 +155,18 @@ def to_categorical(y, num_classes):
     return np.eye(num_classes, dtype='uint8')[y]
 
 
-def cal_sent_len(x_index, max_len=0.9):
-    max_sent_len = 0
-    for i in x_train_index:
-        if len(i) > max_sent_len:
-            max_sent_len = len(i)
-    x_index_len = len(x_index)
-    x_index_len_cover = int(round(x_index_len * 1.0 * max_len, 0))
+def cal_sent_len(sentences, max_len_required=0.9):
+    sent_len_count = {}
+    for sentence in sentences:
+        sent_len_count[len(sentence)] = sent_len_count.get(len(sentence), 0) + 1
+    sentences_count = sum(list(sent_len_count.values()))
+    sent_len_count_list = [(k, sent_len_count[k]) for k in sorted(sent_len_count.keys(), reverse=True)]
+    rm_sentences_count = 0
+    for i, (k, v) in enumerate(sent_len_count_list):
+        rm_sentences_count += v
+        if (sentences_count - rm_sentences_count) / sentences_count * 1.0 < max_len_required:
+            return sent_len_count_list[i + 1][0]
+
 
 
 if __name__ == '__main__':
@@ -194,7 +199,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--epochs', default=200, type=int)
     parser.add_argument("--num_char_no_split", action='store_true')
-    parser.add_argument('--max_sent_len', type=int)
+    parser.add_argument('--max_sent_len_ratio', type=float)
     parser.add_argument('--learning_rate', default=1e-3, type=float)
     args, _ = parser.parse_known_args()
     print(args)
@@ -301,8 +306,8 @@ if __name__ == '__main__':
         if len(i) > max_sent_len:
             max_sent_len = len(i)
     print('max_sent_len={}'.format(max_sent_len))
-    if args.max_sent_len:
-        max_sent_len = args.max_sent_len
+    if args.max_sent_len_ratio and 0 < args.max_sent_len_ratio < 1:
+        max_sent_len = cal_sent_len(x_train_index, args.max_sent_len_ratio)
         print('max_sent_len={}'.format(max_sent_len))
 
     pad_index = 0
