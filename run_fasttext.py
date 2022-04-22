@@ -155,12 +155,14 @@ def to_categorical(y, num_classes):
     return np.eye(num_classes, dtype='uint8')[y]
 
 
-def cal_sent_len(sentences, max_len_required=0.9):
+def cal_sent_len(sentences, max_len_required=0.9997):
     sent_len_count = {}
     for sentence in sentences:
         sent_len_count[len(sentence)] = sent_len_count.get(len(sentence), 0) + 1
     sentences_count = sum(list(sent_len_count.values()))
     sent_len_count_list = [(k, sent_len_count[k]) for k in sorted(sent_len_count.keys(), reverse=True)]
+    for k, v in sent_len_count_list:
+        print('{}\t{}'.format(k, v))
     rm_sentences_count = 0
     for i, (k, v) in enumerate(sent_len_count_list):
         rm_sentences_count += v
@@ -199,7 +201,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--epochs', default=200, type=int)
     parser.add_argument("--num_char_no_split", action='store_true')
-    parser.add_argument('--max_sent_len_ratio', type=float)
+    parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
+    parser.add_argument('--max_sent_len', type=int)
     parser.add_argument('--learning_rate', default=1e-3, type=float)
     args, _ = parser.parse_known_args()
     print(args)
@@ -309,6 +312,10 @@ if __name__ == '__main__':
     if args.max_sent_len_ratio and 0 < args.max_sent_len_ratio < 1:
         max_sent_len = cal_sent_len(x_train_index, args.max_sent_len_ratio)
         print('max_sent_len={}'.format(max_sent_len))
+    if args.max_sent_len:
+        max_sent_len = args.max_sent_len
+        print('max_sent_len={}'.format(max_sent_len))
+    exit(0)
 
     pad_index = 0
     if args.ngrams_word:
@@ -325,10 +332,10 @@ if __name__ == '__main__':
     x_dev_index = sent_pad(x_dev_index, max_sent_len, pad_index)
     x_test_index = sent_pad(x_test_index, max_sent_len, pad_index)
 
-    model = FastTextModel(pad_index + 1, 300, 0.2, num_classes)
+    # model = FastTextModel(pad_index + 1, 300, 0.2, num_classes)
     # model = TextCNN1DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
-    # model = TextCNN2DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
-    # model = TextLSTMModel(pad_index + 1, 300, 256, 2, 0.2, num_classes)
+    model = TextCNN2DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
+    model = TextLSTMModel(pad_index + 1, 300, 256, 2, 0.2, num_classes)
     print(model)
     model = model.to(device)
     learning_rate = args.learning_rate
