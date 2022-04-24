@@ -192,14 +192,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument("--gpu", default="", type=str)
-    parser.add_argument("--ngrams_word", type=int, nargs='*')
-    parser.add_argument("--min_freq_word", type=int, nargs='*')
+    parser.add_argument("--ngrams_word", default=1, type=int, nargs='*')
+    parser.add_argument("--min_freq_word", default=2, type=int, nargs='*')
     parser.add_argument("--max_size_word", type=int, nargs='*')
     parser.add_argument("--ngrams_char", type=int, nargs='*')
     parser.add_argument("--min_freq_char", type=int, nargs='*')
     parser.add_argument("--max_size_char", type=int, nargs='*')
     parser.add_argument('--batch_size', default=32, type=int)
-    parser.add_argument('--epochs', default=200, type=int)
+    parser.add_argument('--epochs', default=50, type=int)
     parser.add_argument("--num_char_no_split", action='store_true')
     parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
     parser.add_argument('--max_sent_len', type=int)
@@ -315,7 +315,7 @@ if __name__ == '__main__':
     if args.max_sent_len:
         max_sent_len = args.max_sent_len
         print('max_sent_len={}'.format(max_sent_len))
-    exit(0)
+    # exit(0)
 
     pad_index = 0
     if args.ngrams_word:
@@ -334,7 +334,7 @@ if __name__ == '__main__':
 
     # model = FastTextModel(pad_index + 1, 300, 0.2, num_classes)
     # model = TextCNN1DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
-    model = TextCNN2DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
+    # model = TextCNN2DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
     model = TextLSTMModel(pad_index + 1, 300, 256, 2, 0.2, num_classes)
     print(model)
     model = model.to(device)
