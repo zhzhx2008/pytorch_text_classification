@@ -19,7 +19,7 @@ from models.fasttext import FastTextModel
 from models.textcnn1d import TextCNN1DModel
 from models.textcnn2d import TextCNN2DModel
 from models.textlstm import TextLSTMModel
-
+from gensim.models import KeyedVectors
 
 
 def shuffle_data(*arrays):
@@ -199,6 +199,99 @@ def cal_sent_len(sentences, max_len_required=0.9997):
             return sent_len_count_list[i + 1][0]
 
 
+def get_embedding_matrix_from_txt_file(embedding_file, word_index):
+    def get_coefs(word, *arr):
+        # if not isinstance(word, unicode):
+        #     word = word.decode('utf-8')
+        return word, np.asarray(arr, dtype='float32')
+
+    embeddings_index = dict(get_coefs(*o.rstrip().split(" ")) for o in codecs.open(embedding_file, 'r', encoding="utf-8", errors='ignore') if len(o) > 100)
+
+    all_embs = np.stack(embeddings_index.values())
+    emb_mean, emb_std = all_embs.mean(), all_embs.std()
+    embed_size = all_embs.shape[1]
+    print('all_embs.shape={}'.format(all_embs.shape))
+    print('all_embs.mean={}'.format(emb_mean))
+    print('all_embs.std={}'.format(emb_std))
+
+    nb_words = len(word_index)
+    print('nb_words={}'.format(nb_words))
+    embedding_matrix = np.random.normal(emb_mean, emb_std, (nb_words, embed_size))
+    count = 0
+    for word, i in word_index.items():
+        if i > nb_words:
+            continue
+        embedding_vector = embeddings_index.get(word)
+        if embedding_vector is not None:
+            embedding_matrix[i] = embedding_vector
+            count += 1
+        else:
+            embedding_vector = embeddings_index.get(word.capitalize())
+            if embedding_vector is not None:
+                embedding_matrix[i] = embedding_vector
+                count += 1
+            else:
+                embedding_vector = embeddings_index.get(word.upper())
+                if embedding_vector is not None:
+                    embedding_matrix[i] = embedding_vector
+                    count += 1
+                else:
+                    embedding_vector = embeddings_index.get(word.lower())
+                    if embedding_vector is not None:
+                        embedding_matrix[i] = embedding_vector
+                        count += 1
+    print('find embedding={}/{}'.format(count, nb_words))
+
+    return embedding_matrix
+
+
+def get_embedding_matrix_from_binary_file(embedding_file, word_index):
+    word2vec = KeyedVectors.load_word2vec_format(embedding_file, binary=True)
+
+    emb_mean, emb_std = word2vec.vectors.mean(), word2vec.vectors.std()
+    embed_size = word2vec.vectors.shape[1]
+    print(' word2vec.syn0.shape={}'.format(word2vec.vectors.shape))
+    print(' word2vec.syn0.mean={}'.format(emb_mean))
+    print(' word2vec.syn0.std={}'.format(emb_std))
+
+    nb_words = len(word_index)
+    print('nb_words={}'.format(nb_words))
+    embedding_matrix = np.random.normal(emb_mean, emb_std, (nb_words, embed_size))
+    count = 0
+    for word, i in word_index.items():
+        if i > nb_words:
+            continue
+        if word in word2vec.vocab:
+            embedding_vector = word2vec.word_vec(word)
+            if embedding_vector is not None:
+                embedding_matrix[i] = embedding_vector
+                count += 1
+            else:
+                embedding_vector = word2vec.word_vec(word.capitalize())
+                if embedding_vector is not None:
+                    embedding_matrix[i] = embedding_vector
+                    count += 1
+                else:
+                    embedding_vector = word2vec.word_vec(word.upper())
+                    if embedding_vector is not None:
+                        embedding_matrix[i] = embedding_vector
+                        count += 1
+                    else:
+                        embedding_vector = word2vec.word_vec(word.lower())
+                        if embedding_vector is not None:
+                            embedding_matrix[i] = embedding_vector
+                            count += 1
+    print('find embedding={}/{}'.format(count, nb_words))
+
+    return embedding_matrix
+
+
+def get_embedding_matrix(embedding_file, word_index):
+    if args.embedding_file.endswith('.bin'):
+        return get_embedding_matrix_from_binary_file(embedding_file, word_index)
+    else:
+        return get_embedding_matrix_from_txt_file(embedding_file, word_index)
+
 
 if __name__ == '__main__':
 
@@ -237,9 +330,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument("--gpu", default="", type=str)
-    parser.add_argument("--ngrams_word", type=int, nargs='*')
-    parser.add_argument("--min_freq_word", type=int, nargs='*')
+    # parser.add_argument("--ngrams_word", type=int, nargs='*')
+    # parser.add_argument("--min_freq_word", type=int, nargs='*')
     parser.add_argument("--max_size_word", type=int, nargs='*')
+
+    # test
+    parser.add_argument("--ngrams_word", default=[1], type=int, nargs='*')
+    parser.add_argument("--min_freq_word", default=[2], type=int, nargs='*')
+
     parser.add_argument("--ngrams_char", type=int, nargs='*')
     parser.add_argument("--min_freq_char", type=int, nargs='*')
     parser.add_argument("--max_size_char", type=int, nargs='*')
@@ -249,7 +347,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
     parser.add_argument('--max_sent_len', type=int)
     parser.add_argument('--learning_rate', default=1e-3, type=float)
-    parser.add_argument('--embedding_file', type=str)
+    parser.add_argument('--embedding_file', default=r'D:\workspace_of_python\pretrained_language_model\Chinese-Word-Vectors\merge_sgns_bigram_char300.txt', type=str)
     args, _ = parser.parse_known_args()
     print(args)
     # exit(0)
@@ -355,7 +453,7 @@ if __name__ == '__main__':
     else:
         print('error, ngrams_word or ngrams_char necessary!')
 
-    max_sent_len = 0    # default max len
+    max_sent_len = 0  # default max len
     for i in x_train_index:
         if len(i) > max_sent_len:
             max_sent_len = len(i)
@@ -382,6 +480,15 @@ if __name__ == '__main__':
     x_train_index, x_train_seq_lens = sent_pad(x_train_index, max_sent_len, pad_index)
     x_dev_index, x_dev_seq_lens = sent_pad(x_dev_index, max_sent_len, pad_index)
     x_test_index, x_test_seq_lens = sent_pad(x_test_index, max_sent_len, pad_index)
+
+    embedding_matrix = None
+    if args.ngrams_word and not args.ngrams_char and args.ngrams_word == [1] and args.embedding_file:
+        word_index = {}
+        for n_gram_word, i in vocabs_word[0].items():
+            word_index[n_gram_word[0]] = i
+        word_index[PAD] = len(word_index)
+        embedding_matrix = get_embedding_matrix(args.embedding_file, word_index)
+        embedding_matrix = torch.tensor(embedding_matrix)
 
     # # test
     # x_train_index = x_train_index[:32+24]

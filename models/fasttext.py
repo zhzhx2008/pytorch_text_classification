@@ -6,9 +6,12 @@ import torch.nn.functional as F
 
 
 class FastTextModel(nn.Module):
-    def __init__(self, num_embeddings, embedding_dim, dropout, num_classes):
+    def __init__(self, dropout, num_classes, embedding_matrix=None, num_embeddings=None, embedding_dim=None, trainalbe=True):
         super(FastTextModel, self).__init__()
-        self.embeding = nn.Embedding(num_embeddings, embedding_dim)
+        if embedding_matrix:
+            self.embeding = nn.Embedding.from_pretrained(embedding_matrix, freeze=trainalbe)
+        else:
+            self.embeding = nn.Embedding(num_embeddings, embedding_dim)
         self.droupout = nn.Dropout(dropout)
         self.fc1 = nn.Linear(embedding_dim, embedding_dim)
         self.fc2 = nn.Linear(embedding_dim, num_classes)
