@@ -9,15 +9,36 @@ import argparse
 import json
 import jieba
 import re
+import copy
 from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
 import torch.backends.cudnn
 import codecs
-from models.FastText import FastTextModel
-from models.TextCNN1D import TextCNN1DModel
-from models.TextCNN2D import TextCNN2DModel
-from models.TextLSTM import TextLSTMModel
+from models.fasttext import FastTextModel
+from models.textcnn1d import TextCNN1DModel
+from models.textcnn2d import TextCNN2DModel
+from models.textlstm import TextLSTMModel
+
+
+
+def shuffle_data(*arrays):
+    if not arrays:
+        return None
+    if isinstance(arrays[0], list):
+        list_len = len(arrays[0])
+    else:
+        list_len = arrays[0].shape[0]
+    idx = [i for i in range(0, list_len)]
+    idx_shuffle = copy.deepcopy(idx)
+    np.random.shuffle(idx_shuffle)
+    res = []
+    for x in arrays:
+        if isinstance(x, list):
+            res.append(np.array(x)[idx_shuffle].tolist())
+        else:
+            res.append(x[idx_shuffle])
+    return tuple(res)
 
 
 def build_dataset(data_path, num_char_no_split=False):
@@ -96,38 +117,45 @@ def row_concate(x1, x2):
 
 def sent_pad(x_index, max_sent_len, pad_value):
     x_index_new = []
+    seq_lens = []
     for x in x_index:
+        seq_len = len(x)
         if len(x) < max_sent_len:
             x.extend([pad_value] * (max_sent_len - len(x)))
         elif len(x) > max_sent_len:
             x = x[:max_sent_len]
+            seq_len = max_sent_len
         x_index_new.append(x)
-    return x_index_new
+        seq_lens.append(seq_len)
+    return x_index_new, seq_lens
 
 
 class DatasetIterater(object):
     def __init__(self, inputs, targets, batch_size, device):
         self.batch_size = batch_size
-        self.inputs = inputs
+        self.inputs = inputs[0]
+        self.seq_lens = inputs[1]
         self.targets = targets
-        self.n_batches = len(inputs) // batch_size
+        self.n_batches = len(inputs[0]) // batch_size
         self.residue = False  # 记录batch数量是否为整数
-        if len(inputs) % self.n_batches != 0:
+        if len(inputs[0]) % self.n_batches != 0:
             self.residue = True
         self.index = 0
         self.device = device
 
-    def _to_tensor(self, inputs, targets):
+    def _to_tensor(self, inputs, seq_lens, targets):
         x = torch.LongTensor(inputs).to(self.device)
+        x_seq_lens = torch.LongTensor(seq_lens).to(self.device)
         y = torch.FloatTensor(targets).to(self.device)
-        return x, y
+        return (x, x_seq_lens), y
 
     def __next__(self):
         if self.residue and self.index == self.n_batches:
             batches_inputs = self.inputs[self.index * self.batch_size: len(self.inputs)]
+            batches_seq_lens = self.seq_lens[self.index * self.batch_size: len(self.seq_lens)]
             batches_targets = self.targets[self.index * self.batch_size: len(self.targets)]
             self.index += 1
-            batches = self._to_tensor(batches_inputs, batches_targets)
+            batches = self._to_tensor(batches_inputs, batches_seq_lens, batches_targets)
             return batches
 
         elif self.index >= self.n_batches:
@@ -135,9 +163,10 @@ class DatasetIterater(object):
             raise StopIteration
         else:
             batches_inputs = self.inputs[self.index * self.batch_size: (self.index + 1) * self.batch_size]
+            batches_seq_lens = self.seq_lens[self.index * self.batch_size: (self.index + 1) * self.batch_size]
             batches_targets = self.targets[self.index * self.batch_size: (self.index + 1) * self.batch_size]
             self.index += 1
-            batches = self._to_tensor(batches_inputs, batches_targets)
+            batches = self._to_tensor(batches_inputs, batches_seq_lens, batches_targets)
             return batches
 
     def __iter__(self):
@@ -173,6 +202,22 @@ def cal_sent_len(sentences, max_len_required=0.9997):
 
 if __name__ == '__main__':
 
+    # # test shuffle_data
+    # x = [[1, 2, 3], [4], [5, 6], [7], [8, 9, 10]]
+    # y = [3, 0, 2, 4, 1]
+    # x_np = np.array(x)
+    # y_np = np.array(y)
+    # a, b = shuffle_data(x, y)
+    # print(a)
+    # print(b)
+    # a, b = shuffle_data(x_np, y_np)
+    # print(a)
+    # print(b)
+    # a, b = shuffle_data(x_np, y)
+    # print(a)
+    # print(b)
+    # exit(0)
+
     # # test build n-gram x_index
     # UNK, PAD = '<UNK>', '<PAD>'
     # sentences = [
@@ -192,14 +237,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument("--gpu", default="", type=str)
-    parser.add_argument("--ngrams_word", default=1, type=int, nargs='*')
-    parser.add_argument("--min_freq_word", default=2, type=int, nargs='*')
+    parser.add_argument("--ngrams_word", default=[1], type=int, nargs='*')
+    parser.add_argument("--min_freq_word", default=[2], type=int, nargs='*')
     parser.add_argument("--max_size_word", type=int, nargs='*')
     parser.add_argument("--ngrams_char", type=int, nargs='*')
     parser.add_argument("--min_freq_char", type=int, nargs='*')
     parser.add_argument("--max_size_char", type=int, nargs='*')
     parser.add_argument('--batch_size', default=32, type=int)
-    parser.add_argument('--epochs', default=50, type=int)
+    parser.add_argument('--epochs', default=1, type=int)
     parser.add_argument("--num_char_no_split", action='store_true')
     parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
     parser.add_argument('--max_sent_len', type=int)
@@ -227,6 +272,9 @@ if __name__ == '__main__':
     data_train_word, data_dev_word, data_train_char, data_dev_char, labels_train, labels_dev = train_test_split(
         sentences_word, sentences_char, labels, test_size=0.1, shuffle=True, stratify=labels
     )
+    # shuffle train/dev
+    data_train_word, data_train_char, labels_train = shuffle_data(data_train_word, data_train_char, labels_train)
+    data_dev_word, data_dev_char, labels_dev = shuffle_data(data_dev_word, data_dev_char, labels_dev)
     data_test_word, data_test_char, labels_test = build_dataset(data_test, num_char_no_split=args.num_char_no_split)
 
     print('train size={}'.format(len(data_train_word)))
@@ -261,10 +309,12 @@ if __name__ == '__main__':
     ngrams_word = None
     if args.ngrams_word:
         ngrams_word = args.ngrams_word
+        # if not isinstance(ngrams_word, list): ngrams_word=[ngrams_word]
         ngrams_word.sort()
     ngrams_char = None
     if args.ngrams_char:
         ngrams_char = args.ngrams_char
+        # if not isinstance(ngrams_char, list): ngrams_char = [ngrams_char]
         ngrams_char.sort()
 
     if args.ngrams_word and args.ngrams_char:
@@ -328,9 +378,9 @@ if __name__ == '__main__':
             pad_index += len(v)
     print('pad_index={}'.format(pad_index))
 
-    x_train_index = sent_pad(x_train_index, max_sent_len, pad_index)
-    x_dev_index = sent_pad(x_dev_index, max_sent_len, pad_index)
-    x_test_index = sent_pad(x_test_index, max_sent_len, pad_index)
+    x_train_index, x_train_seq_lens = sent_pad(x_train_index, max_sent_len, pad_index)
+    x_dev_index, x_dev_seq_lens = sent_pad(x_dev_index, max_sent_len, pad_index)
+    x_test_index, x_test_seq_lens = sent_pad(x_test_index, max_sent_len, pad_index)
 
     # model = FastTextModel(pad_index + 1, 300, 0.2, num_classes)
     # model = TextCNN1DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
@@ -362,9 +412,8 @@ if __name__ == '__main__':
         train_batch = 0
         # for batch_idx, (inputs, targets) in enumerate(trainloader):
         for batch_idx, (inputs, targets) in enumerate(
-                DatasetIterater(x_train_index, y_train_index, batch_size=args.batch_size, device=device)
+                DatasetIterater((x_train_index, x_train_seq_lens), y_train_index, batch_size=args.batch_size, device=device)
         ):
-            inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, targets)
@@ -390,9 +439,8 @@ if __name__ == '__main__':
         dev_batch = 0
         # for batch_idx, (inputs, targets) in enumerate(devloader):
         for batch_idx, (inputs, targets) in enumerate(
-                DatasetIterater(x_dev_index, y_dev_index, batch_size=args.batch_size, device=device)
+                DatasetIterater((x_dev_index, x_train_seq_lens), y_dev_index, batch_size=args.batch_size, device=device)
         ):
-            inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
@@ -434,9 +482,8 @@ if __name__ == '__main__':
             test_batch = 0
             # for batch_idx, (inputs, targets) in enumerate(testloader):
             for batch_idx, (inputs, targets) in enumerate(
-                    DatasetIterater(x_test_index, y_test_index, batch_size=args.batch_size, device=device)
+                    DatasetIterater((x_test_index, x_test_seq_lens), y_test_index, batch_size=args.batch_size, device=device)
             ):
-                inputs, targets = inputs.to(device), targets.to(device)
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
 

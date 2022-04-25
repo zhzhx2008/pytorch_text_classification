@@ -21,12 +21,13 @@ class TextLSTMModel(nn.Module):
         self.fc = nn.Linear(hidden_size * 2, num_classes)
 
     # def forward(self, x):
+    #     x, seq_lens = x
     #     out = self.embedding(x)
     #     out, _ = self.lstm(out)
     #     out = self.fc(out[:, -1, :])
     #     return out
 
-    def forwart(self, x):
+    def forward(self, x):
         '''变长RNN'''
         out, seq_lens = x
         tensor_in = self.embedding(out)

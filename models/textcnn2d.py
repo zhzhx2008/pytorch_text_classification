@@ -31,6 +31,7 @@ class TextCNN2DModel(nn.Module):
         return x
 
     def forward(self, x):
+        x, seq_lens = x
         out = self.embedding(x)
         out = out.unsqueeze(1)
         out = torch.cat([self.conv_and_pool(out, conv) for conv in self.convs], 1)

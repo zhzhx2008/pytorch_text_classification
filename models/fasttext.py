@@ -14,6 +14,7 @@ class FastTextModel(nn.Module):
         self.fc2 = nn.Linear(embedding_dim, num_classes)
 
     def forward(self, x):
+        x, seq_lens = x
         out = self.embeding(x)
 
         # # SpatialDroupout
