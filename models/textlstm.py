@@ -33,9 +33,9 @@ class TextLSTMModel(nn.Module):
         tensor_in = self.embedding(out)
         _, idx_sort = torch.sort(seq_lens, dim=0, descending=True)
         _, idx_unsort = torch.sort(idx_sort, dim=0)
-        order_seq_lengths = torch.index_select(seq_lens, dim=0, index=idx_sort)
+        order_seq_lengths = list(seq_lens[idx_sort])
         order_tensor_in = torch.index_select(tensor_in, dim=0, index=idx_sort)
-        x_packed = nn.utils.rnn.pack_padded_sequence(order_tensor_in, order_seq_lengths, batch_first=True)
+        x_packed = nn.utils.rnn.pack_padded_sequence(order_tensor_in, order_seq_lengths, batch_first=True)  # lengths: (Tensor or list(int)), (must be on the CPU if provided as a tensor).
         y_packed, (h_n, c_n) = self.lstm(x_packed)
         # y_sort, length = nn.utils.rnn.pad_packed_sequence(y_packed, batch_first=True)
         # y = torch.index_select(y_sort, dim=0, index=idx_unsort)
