@@ -35,7 +35,7 @@ def shuffle_data(*arrays):
     res = []
     for x in arrays:
         if isinstance(x, list):
-            res.append(np.array(x)[idx_shuffle].tolist())
+            res.append(np.array(x, dtype=object)[idx_shuffle].tolist())
         else:
             res.append(x[idx_shuffle])
     return tuple(res)
@@ -138,7 +138,7 @@ class DatasetIterater(object):
         self.targets = targets
         self.n_batches = len(inputs[0]) // batch_size
         self.residue = False  # 记录batch数量是否为整数
-        if len(inputs[0]) % self.n_batches != 0:
+        if len(inputs[0]) - self.n_batches * batch_size != 0:
             self.residue = True
         self.index = 0
         self.device = device
@@ -237,8 +237,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument("--gpu", default="", type=str)
-    parser.add_argument("--ngrams_word", default=[1], type=int, nargs='*')
-    parser.add_argument("--min_freq_word", default=[2], type=int, nargs='*')
+    parser.add_argument("--ngrams_word", type=int, nargs='*')
+    parser.add_argument("--min_freq_word", type=int, nargs='*')
     parser.add_argument("--max_size_word", type=int, nargs='*')
     parser.add_argument("--ngrams_char", type=int, nargs='*')
     parser.add_argument("--min_freq_char", type=int, nargs='*')
@@ -383,6 +383,17 @@ if __name__ == '__main__':
     x_dev_index, x_dev_seq_lens = sent_pad(x_dev_index, max_sent_len, pad_index)
     x_test_index, x_test_seq_lens = sent_pad(x_test_index, max_sent_len, pad_index)
 
+    # # test
+    # x_train_index = x_train_index[:32+24]
+    # x_dev_index = x_dev_index[:32+24]
+    # x_test_index = x_test_index[:32+24]
+    # x_train_seq_lens = x_train_seq_lens[:32 + 24]
+    # x_dev_seq_lens = x_dev_seq_lens[:32 + 24]
+    # x_test_seq_lens = x_test_seq_lens[:32 + 24]
+    # y_train_index = y_train_index[:32 + 24]
+    # y_dev_index = y_dev_index[:32 + 24]
+    # y_test_index =y_test_index[:32 + 24]
+
     # model = FastTextModel(pad_index + 1, 300, 0.2, num_classes)
     # model = TextCNN1DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
     # model = TextCNN2DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
@@ -440,7 +451,7 @@ if __name__ == '__main__':
         dev_batch = 0
         # for batch_idx, (inputs, targets) in enumerate(devloader):
         for batch_idx, (inputs, targets) in enumerate(
-                DatasetIterater((x_dev_index, x_train_seq_lens), y_dev_index, batch_size=args.batch_size, device=device)
+                DatasetIterater((x_dev_index, x_dev_seq_lens), y_dev_index, batch_size=args.batch_size, device=device)
         ):
             outputs = model(inputs)
             loss = criterion(outputs, targets)
