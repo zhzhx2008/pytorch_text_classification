@@ -4,46 +4,40 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class TextCNN1DModel(nn.Module):
+class TextRCNN(nn.Module):
     def __init__(self,
-                 num_filters,
-                 filter_sizes,
+                 hidden_size,
+                 num_layers,
                  dropout,
                  num_classes,
+                 seq_len,
                  num_embeddings=None, embedding_dim=None,
                  embedding_matrix=None, trainalbe=True):
-        super(TextCNN1DModel, self).__init__()
+        super(TextRCNN, self).__init__()
         if embedding_matrix is not None:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
                                                           freeze=trainalbe,
                                                           padding_idx=embedding_matrix.shape[0]-1)
         else:
             self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings-1)
-        self.convs = nn.ModuleList(
-            [
-                nn.Conv1d(embedding_dim, num_filters, k, stride=1) for k in filter_sizes
-                # nn.Conv2d(1, num_filters, (k, embedding_dim)) for k in filter_sizes
-            ]
-        )
-        self.dropout = nn.Dropout(dropout)
-        self.fc = nn.Linear(num_filters * len(filter_sizes), num_classes)
-
-    def conv_and_pool(self, x, conv):
-        x = F.relu(conv(x))
-        x = F.max_pool1d(x, x.size(2)).squeeze(2)
-        return x
+        self.lstm = nn.LSTM(embedding_dim, hidden_size, num_layers, bidirectional=True, batch_first=True, dropout=dropout)
+        self.maxpool = nn.MaxPool1d(seq_len)
+        self.embed = embedding_matrix.shape[1] if embedding_matrix else embedding_dim
+        self.fc = nn.Linear(hidden_size * 2 + self.embed, num_classes)
 
     def forward(self, x):
-        x, seq_lens = x
-        out = self.embedding(x)
+        x, _ = x
+        embed = self.embedding(x)  # [batch_size, seq_len, embeding]=[64, 32, 64]
+        out, _ = self.lstm(embed)
+        out = torch.cat((embed, out), 2)
+        out = F.relu(out)
         out = out.permute(0, 2, 1)
-        out = torch.cat([self.conv_and_pool(out, conv) for conv in self.convs], 1)
-        out = self.dropout(out)
+        out = self.maxpool(out).squeeze()
         out = self.fc(out)
         return out
 
 if __name__ == '__main__':
-    net = TextCNN1DModel(256, (2, 3, 4), 0.2, 15, num_embeddings=10000, embedding_dim=300)
+    net = TextRCNN(256, 2, 0.2, 15, 20, num_embeddings=10000, embedding_dim=300)
 
     # # need rm Embedding layer
     # from torchsummary import summary

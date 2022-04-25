@@ -6,17 +6,19 @@ import torch.nn.functional as F
 
 class TextLSTMModel(nn.Module):
     def __init__(self,
-                 n_vocab, embedding_dim,
                  hidden_size,
                  num_layers,
                  dropout,
                  num_classes,
-                 embedding_pretrained=None):
+                 num_embeddings=None, embedding_dim=None,
+                 embedding_matrix=None, trainalbe=True):
         super(TextLSTMModel, self).__init__()
-        if embedding_pretrained is not None:
-            self.embedding = nn.Embedding.from_pretrained(embedding_pretrained, freeze=False)
+        if embedding_matrix is not None:
+            self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
+                                                          freeze=trainalbe,
+                                                          padding_idx=embedding_matrix.shape[0] - 1)
         else:
-            self.embedding = nn.Embedding(n_vocab, embedding_dim, padding_idx=n_vocab-1)
+            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings - 1)
         self.lstm = nn.LSTM(embedding_dim, hidden_size, num_layers, bidirectional=True, batch_first=True, dropout=dropout)
         self.fc = nn.Linear(hidden_size * 2, num_classes)
 
@@ -69,7 +71,7 @@ if __name__ == '__main__':
 
 
 
-    net = TextLSTMModel(10000, 300, 256, 2, 0.2, 15)
+    net = TextLSTMModel(256, 2, 0.2, 15, num_embeddings=10000, embedding_dim=300)
 
     # # need rm Embedding layer
     # from torchinfo import summary
@@ -77,6 +79,7 @@ if __name__ == '__main__':
     # exit(0)
 
     print(net)
-    x = torch.randint(0, 10000, (1, 20))
-    y = net(x)
+    x = torch.randint(0, 10000, (5, 20))
+    seq_lens = torch.tensor([3,5,2,1,4])
+    y = net((x, seq_lens))
     print(y)

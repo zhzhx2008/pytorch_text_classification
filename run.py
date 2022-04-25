@@ -330,13 +330,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument("--gpu", default="", type=str)
-    # parser.add_argument("--ngrams_word", type=int, nargs='*')
-    # parser.add_argument("--min_freq_word", type=int, nargs='*')
+    parser.add_argument("--ngrams_word", type=int, nargs='*')
+    parser.add_argument("--min_freq_word", type=int, nargs='*')
     parser.add_argument("--max_size_word", type=int, nargs='*')
 
-    # test
-    parser.add_argument("--ngrams_word", default=[1], type=int, nargs='*')
-    parser.add_argument("--min_freq_word", default=[2], type=int, nargs='*')
+    # # test
+    # parser.add_argument("--ngrams_word", default=[1], type=int, nargs='*')
+    # parser.add_argument("--min_freq_word", default=[2], type=int, nargs='*')
 
     parser.add_argument("--ngrams_char", type=int, nargs='*')
     parser.add_argument("--min_freq_char", type=int, nargs='*')
@@ -347,7 +347,8 @@ if __name__ == '__main__':
     parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
     parser.add_argument('--max_sent_len', type=int)
     parser.add_argument('--learning_rate', default=1e-3, type=float)
-    parser.add_argument('--embedding_file', default=r'D:\workspace_of_python\pretrained_language_model\Chinese-Word-Vectors\merge_sgns_bigram_char300.txt', type=str)
+    parser.add_argument('--embedding_file', type=str)
+    parser.add_argument('--trainalbe', action='store_true')
     args, _ = parser.parse_known_args()
     print(args)
     # exit(0)
@@ -501,10 +502,16 @@ if __name__ == '__main__':
     # y_dev_index = y_dev_index[:32 + 24]
     # y_test_index =y_test_index[:32 + 24]
 
-    # model = FastTextModel(pad_index + 1, 300, 0.2, num_classes)
-    # model = TextCNN1DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
-    # model = TextCNN2DModel(pad_index + 1, 300, 256, (2, 3, 4), 0.2, num_classes)
-    model = TextLSTMModel(pad_index + 1, 300, 256, 2, 0.2, num_classes)
+    # model = FastTextModel(0.2, num_classes, num_embeddings=pad_index+1, embedding_dim=300)
+    # model = TextCNN1DModel(256, (2, 3, 4), 0.2, num_classes, num_embeddings=pad_index+1, embedding_dim=300)
+    # model = TextCNN2DModel(256, (2, 3, 4), 0.2, num_classes, num_embeddings=pad_index+1, embedding_dim=300)
+    # model = TextLSTMModel(256, 2, 0.2, num_classes, num_embeddings=pad_index+1, embedding_dim=300)
+
+    model = FastTextModel(0.2, num_classes, embedding_matrix=embedding_matrix, trainalbe=args.trainalbe)
+    # model = TextCNN1DModel(256, (2, 3 ,4), 0.2, num_classes, embedding_matrix=embedding_matrix, trainalbe=args.trainalbe)
+    # model = TextCNN2DModel(256, (2, 3, 4), 0.2, num_classes, embedding_matrix=embedding_matrix, trainalbe=args.trainalbe)
+    # model = TextLSTMModel(256, 2, 0.2, num_classes, embedding_matrix=embedding_matrix, trainalbe=args.trainalbe)
+
     print(model)
     model = model.to(device)
     learning_rate = args.learning_rate

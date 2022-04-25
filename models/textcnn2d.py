@@ -6,17 +6,19 @@ import torch.nn.functional as F
 
 class TextCNN2DModel(nn.Module):
     def __init__(self,
-                 n_vocab, embedding_dim,
                  num_filters,
                  filter_sizes,
                  dropout,
                  num_classes,
-                 embedding_pretrained=None):
+                 num_embeddings=None, embedding_dim=None,
+                 embedding_matrix=None, trainalbe=True):
         super(TextCNN2DModel, self).__init__()
-        if embedding_pretrained is not None:
-            self.embedding = nn.Embedding.from_pretrained(embedding_pretrained, freeze=False)
+        if embedding_matrix is not None:
+            self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
+                                                          freeze=trainalbe,
+                                                          padding_idx=embedding_matrix.shape[0] - 1)
         else:
-            self.embedding = nn.Embedding(n_vocab, embedding_dim, padding_idx=n_vocab-1)
+            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings - 1)
         self.convs = nn.ModuleList(
             [
                 nn.Conv2d(1, num_filters, (k, embedding_dim)) for k in filter_sizes
@@ -40,7 +42,7 @@ class TextCNN2DModel(nn.Module):
         return out
 
 if __name__ == '__main__':
-    net = TextCNN2DModel(10000, 300, 256, (2, 3, 4), 0.2, 15)
+    net = TextCNN2DModel(256, (2, 3, 4), 0.2, 15, num_embeddings=10000, embedding_dim=300)
 
     # # need rm Embedding layer
     # from torchsummary import summary
@@ -49,5 +51,5 @@ if __name__ == '__main__':
 
     print(net)
     x = torch.randint(0, 10000, (1, 20))
-    y = net(x)
+    y = net((x, None))
     print(y)

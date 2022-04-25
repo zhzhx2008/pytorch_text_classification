@@ -6,12 +6,16 @@ import torch.nn.functional as F
 
 
 class FastTextModel(nn.Module):
-    def __init__(self, dropout, num_classes, embedding_matrix=None, num_embeddings=None, embedding_dim=None, trainalbe=True):
+    def __init__(self, dropout, num_classes,
+                 embedding_matrix=None, trainalbe=True,
+                 num_embeddings=None, embedding_dim=None):
         super(FastTextModel, self).__init__()
         if embedding_matrix:
-            self.embeding = nn.Embedding.from_pretrained(embedding_matrix, freeze=trainalbe)
+            self.embeding = nn.Embedding.from_pretrained(embedding_matrix,
+                                                         freeze=trainalbe,
+                                                         padding_idx=embedding_matrix.shape[0]-1)
         else:
-            self.embeding = nn.Embedding(num_embeddings, embedding_dim)
+            self.embeding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings-1)
         self.droupout = nn.Dropout(dropout)
         self.fc1 = nn.Linear(embedding_dim, embedding_dim)
         self.fc2 = nn.Linear(embedding_dim, num_classes)
@@ -35,10 +39,10 @@ class FastTextModel(nn.Module):
 
 
 if __name__ == '__main__':
-    net = FastTextModel(10000, 300, 0.2, 5)
+    net = FastTextModel(0.2, 5, num_embeddings=10000, embedding_dim=300)
     print(net)
     # from torchsummary import summary
     # summary(net, (20,))
     x = torch.randint(0, 10000, (1, 20))
-    y = net(x)
+    y = net((x, None))
     print(y)
