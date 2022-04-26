@@ -4,6 +4,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+'''Recurrent Convolutional Neural Networks for Text Classification'''
+
+
 class TextRCNN(nn.Module):
     def __init__(self,
                  hidden_size,
@@ -27,9 +31,9 @@ class TextRCNN(nn.Module):
 
     def forward(self, x):
         x, _ = x
-        embed = self.embedding(x)  # [batch_size, seq_len, embeding]=[64, 32, 64]
-        out, _ = self.lstm(embed)
-        out = torch.cat((embed, out), 2)
+        x = self.embedding(x)  # [batch_size, seq_len, embeding]=[64, 32, 64]
+        out, _ = self.lstm(x)
+        out = torch.cat((x, out), 2)
         out = F.relu(out)
         out = out.permute(0, 2, 1)
         out = self.maxpool(out).squeeze()
@@ -40,8 +44,8 @@ if __name__ == '__main__':
     net = TextRCNN(256, 2, 0.2, 15, 20, num_embeddings=10000, embedding_dim=300)
 
     # # need rm Embedding layer
-    # from torchsummary import summary
-    # summary(net, (20, 300))
+    # from torchinfo import summary
+    # summary(net, (32, 20, 300))
     # exit(0)
 
     print(net)

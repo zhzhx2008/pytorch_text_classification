@@ -4,6 +4,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+'''Convolutional Neural Networks for Sentence Classification'''
+
+
 class TextCNN2DModel(nn.Module):
     def __init__(self,
                  num_filters,
@@ -34,8 +38,8 @@ class TextCNN2DModel(nn.Module):
 
     def forward(self, x):
         x, seq_lens = x
-        out = self.embedding(x)
-        out = out.unsqueeze(1)
+        x = self.embedding(x)
+        out = x.unsqueeze(1)
         out = torch.cat([self.conv_and_pool(out, conv) for conv in self.convs], 1)
         out = self.dropout(out)
         out = self.fc(out)

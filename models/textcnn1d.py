@@ -35,8 +35,8 @@ class TextCNN1DModel(nn.Module):
 
     def forward(self, x):
         x, seq_lens = x
-        out = self.embedding(x)
-        out = out.permute(0, 2, 1)
+        x = self.embedding(x)
+        out = x.permute(0, 2, 1)
         out = torch.cat([self.conv_and_pool(out, conv) for conv in self.convs], 1)
         out = self.dropout(out)
         out = self.fc(out)

@@ -18,7 +18,7 @@ import codecs
 from models.fasttext import FastTextModel
 from models.textcnn1d import TextCNN1DModel
 from models.textcnn2d import TextCNN2DModel
-from models.textlstm import TextLSTMModel
+from models.textrnn import TextRNNModel
 from gensim.models import KeyedVectors
 
 

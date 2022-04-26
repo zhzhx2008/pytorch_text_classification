@@ -4,7 +4,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class TextLSTMModel(nn.Module):
+
+'''Recurrent Neural Network for Text Classification with Multi-Task Learning'''
+
+
+class TextRNNModel(nn.Module):
     def __init__(self,
                  hidden_size,
                  num_layers,
@@ -12,7 +16,7 @@ class TextLSTMModel(nn.Module):
                  num_classes,
                  num_embeddings=None, embedding_dim=None,
                  embedding_matrix=None, trainalbe=True):
-        super(TextLSTMModel, self).__init__()
+        super(TextRNNModel, self).__init__()
         if embedding_matrix is not None:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
                                                           freeze=trainalbe,
@@ -22,29 +26,29 @@ class TextLSTMModel(nn.Module):
         self.lstm = nn.LSTM(embedding_dim, hidden_size, num_layers, bidirectional=True, batch_first=True, dropout=dropout)
         self.fc = nn.Linear(hidden_size * 2, num_classes)
 
-    # def forward(self, x):
-    #     x, seq_lens = x
-    #     out = self.embedding(x)
-    #     out, _ = self.lstm(out)
-    #     out = self.fc(out[:, -1, :])
-    #     return out
-
     def forward(self, x):
-        '''变长RNN'''
-        out, seq_lens = x
-        tensor_in = self.embedding(out)
-        _, idx_sort = torch.sort(seq_lens, dim=0, descending=True)
-        _, idx_unsort = torch.sort(idx_sort, dim=0)
-        # order_seq_lengths = list(seq_lens[idx_sort])
-        order_seq_lengths = torch.index_select(seq_lens, dim=0, index=idx_sort)
-        order_tensor_in = torch.index_select(tensor_in, dim=0, index=idx_sort)
-        x_packed = nn.utils.rnn.pack_padded_sequence(order_tensor_in, order_seq_lengths.tolist(), batch_first=True)  # lengths: (Tensor or list(int)), (must be on the CPU if provided as a tensor).
-        y_packed, (h_n, c_n) = self.lstm(x_packed)
-        # y_sort, length = nn.utils.rnn.pad_packed_sequence(y_packed, batch_first=True)
-        # y = torch.index_select(y_sort, dim=0, index=idx_unsort)
-        last_h = torch.index_select(torch.cat((h_n[-2], h_n[-1]), -1), dim=0, index=idx_unsort)
-        out = self.fc(last_h)
+        x, seq_lens = x
+        x = self.embedding(x)
+        out, _ = self.lstm(x)
+        out = self.fc(out[:, -1, :])
         return out
+
+    # def forward(self, x):
+    #     '''变长RNN'''
+    #     out, seq_lens = x
+    #     tensor_in = self.embedding(out)
+    #     _, idx_sort = torch.sort(seq_lens, dim=0, descending=True)
+    #     _, idx_unsort = torch.sort(idx_sort, dim=0)
+    #     # order_seq_lengths = list(seq_lens[idx_sort])
+    #     order_seq_lengths = torch.index_select(seq_lens, dim=0, index=idx_sort)
+    #     order_tensor_in = torch.index_select(tensor_in, dim=0, index=idx_sort)
+    #     x_packed = nn.utils.rnn.pack_padded_sequence(order_tensor_in, order_seq_lengths.tolist(), batch_first=True)  # lengths: (Tensor or list(int)), (must be on the CPU if provided as a tensor).
+    #     y_packed, (h_n, c_n) = self.lstm(x_packed)
+    #     # y_sort, length = nn.utils.rnn.pad_packed_sequence(y_packed, batch_first=True)
+    #     # y = torch.index_select(y_sort, dim=0, index=idx_unsort)
+    #     last_h = torch.index_select(torch.cat((h_n[-2], h_n[-1]), -1), dim=0, index=idx_unsort)
+    #     out = self.fc(last_h)
+    #     return out
 
 
 
@@ -71,11 +75,11 @@ if __name__ == '__main__':
 
 
 
-    net = TextLSTMModel(256, 2, 0.2, 15, num_embeddings=10000, embedding_dim=300)
+    net = TextRNNModel(256, 2, 0.2, 15, num_embeddings=10000, embedding_dim=300)
 
     # # need rm Embedding layer
     # from torchinfo import summary
-    # summary(net, (5000, 20, 300))
+    # summary(net, (32, 20, 300))
     # exit(0)
 
     print(net)
