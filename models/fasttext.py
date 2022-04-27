@@ -10,12 +10,12 @@ import torch.nn.functional as F
 
 class FastTextModel(nn.Module):
     def __init__(self, dropout, num_classes,
-                 embedding_matrix=None, trainalbe=True,
+                 embedding_matrix=None, freeze=False,
                  num_embeddings=None, embedding_dim=None):
         super(FastTextModel, self).__init__()
         if embedding_matrix:
             self.embeding = nn.Embedding.from_pretrained(embedding_matrix,
-                                                         freeze=trainalbe,
+                                                         freeze=freeze,
                                                          padding_idx=embedding_matrix.shape[0]-1)
         else:
             self.embeding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings-1)
@@ -48,7 +48,13 @@ if __name__ == '__main__':
     # # need rm Embedding layer
     # from torchsummary import summary
     # summary(net, (20, 300))
+    # exit(0)
 
-    x = torch.randint(0, 10000, (1, 20))
+    # # need rm Embedding layer
+    # from torchinfo import summary
+    # summary(net, (32, 20, 300))
+    # exit(0)
+
+    x = torch.randint(0, 10000, (32, 20))
     y = net((x, None))
     print(y)

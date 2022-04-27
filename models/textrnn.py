@@ -15,11 +15,11 @@ class TextRNNModel(nn.Module):
                  dropout,
                  num_classes,
                  num_embeddings=None, embedding_dim=None,
-                 embedding_matrix=None, trainalbe=True):
+                 embedding_matrix=None, freeze=False):
         super(TextRNNModel, self).__init__()
         if embedding_matrix is not None:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
-                                                          freeze=trainalbe,
+                                                          freeze=freeze,
                                                           padding_idx=embedding_matrix.shape[0] - 1)
         else:
             self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings - 1)

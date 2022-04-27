@@ -11,11 +11,11 @@ class TextCNN1DModel(nn.Module):
                  dropout,
                  num_classes,
                  num_embeddings=None, embedding_dim=None,
-                 embedding_matrix=None, trainalbe=True):
+                 embedding_matrix=None, freeze=False):
         super(TextCNN1DModel, self).__init__()
         if embedding_matrix is not None:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
-                                                          freeze=trainalbe,
+                                                          freeze=freeze,
                                                           padding_idx=embedding_matrix.shape[0]-1)
         else:
             self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings-1)
@@ -50,7 +50,13 @@ if __name__ == '__main__':
     # summary(net, (20, 300))
     # exit(0)
 
+    # need rm Embedding layer
+    from torchinfo import summary
+    # summary(net, (32, 20), dtypes=[torch.int] * 32)
+    summary(net, input_data=[torch.randint(0, 10000, (32, 20)), torch.randint(0, 20, (32,))])
+    exit(0)
+
     print(net)
-    x = torch.randint(0, 10000, (1, 20))
+    x = torch.randint(0, 10000, (32, 20))
     y = net((x, None))
     print(y)
