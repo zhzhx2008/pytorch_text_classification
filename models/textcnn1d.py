@@ -50,11 +50,11 @@ if __name__ == '__main__':
     # summary(net, (20, 300))
     # exit(0)
 
-    # need rm Embedding layer
-    from torchinfo import summary
-    # summary(net, (32, 20), dtypes=[torch.int] * 32)
-    summary(net, input_data=[torch.randint(0, 10000, (32, 20)), torch.randint(0, 20, (32,))])
-    exit(0)
+    # # need rm Embedding layer
+    # from torchinfo import summary
+    # summary(net, (32, 20, 300))
+    # # summary(net, input_data=[torch.randint(0, 10000, (32, 20)), torch.randint(0, 20, (32,))])   # TypeError: forward() takes 2 positional arguments but 3 were given
+    # exit(0)
 
     print(net)
     x = torch.randint(0, 10000, (32, 20))
