@@ -346,7 +346,8 @@ if __name__ == '__main__':
     parser.add_argument("--min_freq_char", type=int, nargs='*')
     parser.add_argument("--max_size_char", type=int, nargs='*')
     parser.add_argument('--batch_size', default=32, type=int)
-    parser.add_argument('--epochs', default=50, type=int)
+    parser.add_argument('--epochs', default=10000, type=int)
+    parser.add_argument('--patience', default=10, type=int)
     parser.add_argument("--num_char_no_split", action='store_true')
     parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
     parser.add_argument('--max_sent_len', type=int)
@@ -354,6 +355,7 @@ if __name__ == '__main__':
     parser.add_argument('--embedding_file', type=str)
     parser.add_argument('--freeze', action='store_true')
     parser.add_argument('--model_name', type=str)
+    parser.add_argument('--dropout', default=0.5, type=float)
     args, _ = parser.parse_known_args()
     print(args)
     # exit(0)
@@ -488,9 +490,12 @@ if __name__ == '__main__':
     x_test_index, x_test_seq_lens = sent_pad(x_test_index, max_sent_len, pad_index)
 
     embedding_matrix = None
-    if args.ngrams_word and not args.ngrams_char and args.ngrams_word == [1] and args.embedding_file:
+    if ((args.ngrams_word and args.ngrams_word == [1]) or (args.ngrams_char and args.ngrams_char == [1])) and args.embedding_file:
+        vocabs = vocabs_word
+        if vocabs_char:
+            vocabs = vocabs_char
         word_index = {}
-        for n_gram_word, i in vocabs_word[0].items():
+        for n_gram_word, i in vocabs[0].items():
             word_index[n_gram_word[0]] = i
         word_index[PAD] = len(word_index)
         embedding_matrix = get_embedding_matrix(args.embedding_file, word_index)
@@ -509,17 +514,17 @@ if __name__ == '__main__':
 
     model = None
     if args.model_name == 'fasttext':
-        model = FastTextModel(0.2, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+        model = FastTextModel(args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
     elif args.model_name == 'textcnn1d':
-        model = TextCNN1DModel(256, (2, 3, 4), 0.2, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+        model = TextCNN1DModel(256, (2, 3, 4), args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
     elif args.model_name == 'textcnn2d':
-        model = TextCNN2DModel(256, (2, 3, 4), 0.2, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+        model = TextCNN2DModel(256, (2, 3, 4), args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
     elif args.model_name == 'textrnn':
-        model = TextRNNModel(256, 2, 0.2, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+        model = TextRNNModel(256, 2, args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
     elif args.model_name == 'textrcnn':
-        model = TextRCNNModel(256, 2, 0.2, num_classes, max_sent_len, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+        model = TextRCNNModel(256, 2, args.dropout, num_classes, max_sent_len, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
     elif args.model_name == 'textrnn_att':
-        model = TextRNNAttModel(256, 2, 0.2, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+        model = TextRNNAttModel(256, 2, args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
     elif args.model_name == 'dpcnn':
         model = DPCNNModel(256, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
     elif args.model_name == 'transformer':
@@ -533,6 +538,7 @@ if __name__ == '__main__':
     model = model.to(device)
     learning_rate = args.learning_rate
     best_acc = 0
+    early_stop_patience = 0
     start_epoch = 0
 
     # resume = False
@@ -547,6 +553,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
     for epoch in range(start_epoch, start_epoch + args.epochs):
+        epoch_start_time = time.time()
         # trainset
         model.train()
         train_loss = 0.0
@@ -574,6 +581,7 @@ if __name__ == '__main__':
             # if batch_idx >= 2:
             #     break
 
+        epoch_end_time = time.time()
         # devset
         model.eval()
         dev_loss = 0.0
@@ -598,8 +606,8 @@ if __name__ == '__main__':
             # if batch_idx >= 2:
             #     break
 
-        print('epoch: {}/{}, train loss={:.4f}, train acc={:.2f}%, dev loss={:.4f}, dev acc={:.2f}%'.format(
-            epoch + 1, start_epoch + args.epochs,
+        print('epoch: {}/{}, {}s, train loss={:.4f}, train acc={:.2f}%, dev loss={:.4f}, dev acc={:.2f}%'.format(
+            epoch + 1, int(epoch_end_time - epoch_start_time), start_epoch + args.epochs,
             train_loss / train_batch, train_correct * 100.0 / train_total,
             dev_loss / dev_batch, dev_correct * 100.0 / dev_total
         ))
@@ -617,6 +625,7 @@ if __name__ == '__main__':
             #     os.mkdir('checkpoint')
             # torch.save(state, './checkpoint/ckpt.pth')
             best_acc = dev_acc
+            early_stop_patience = 0
 
             # testset
             test_loss = 0.0
@@ -640,6 +649,10 @@ if __name__ == '__main__':
             print('saving, test loss={:.4f}, test acc={:.2f}%'.format(
                 test_loss / test_batch, test_correct * 100.0 / test_total
             ))
+        else:
+            early_stop_patience += 1
+            if early_stop_patience >= args.patience:
+                break
 
         # scheduler.step()
 

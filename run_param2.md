@@ -1,0 +1,69 @@
+FastText
+python -u run.py --ngrams_char 1 --min_freq_char 1 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.67%	test acc=50.65%
+python -u run.py --ngrams_char 1 --min_freq_char 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.71%	test acc=50.55%
+python -u run.py --ngrams_char 1 --min_freq_char 3 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.37%	test acc=50.59%
+python -u run.py --ngrams_char 1 --min_freq_char 4 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.65%	test acc=50.72%
+python -u run.py --ngrams_char 1 --min_freq_char 5 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.59%	test acc=50.66%
+python -u run.py --ngrams_char 1 --min_freq_char 6 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.84%	test acc=50.72%
+python -u run.py --ngrams_char 1 --min_freq_char 7 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.54%	test acc=50.59%
+python -u run.py --ngrams_char 1 --min_freq_char 8 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.44%	test acc=50.70%
+python -u run.py --ngrams_char 1 --min_freq_char 9 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.31%	test acc=50.38%
+python -u run.py --ngrams_char 2 --min_freq_char 1 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=46.95%	test acc=47.70%
+python -u run.py --ngrams_char 2 --min_freq_char 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=48.73%	test acc=49.22%
+python -u run.py --ngrams_char 2 --min_freq_char 3 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=48.78%	test acc=49.71%
+python -u run.py --ngrams_char 2 --min_freq_char 4 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=48.67%	test acc=50.28%
+python -u run.py --ngrams_char 2 --min_freq_char 5 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=49.04%	test acc=50.35%
+python -u run.py --ngrams_char 2 --min_freq_char 6 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=48.93%	test acc=50.52%
+python -u run.py --ngrams_char 2 --min_freq_char 7 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext   dev acc=49.38%  test acc=50.53%
+python -u run.py --ngrams_char 2 --min_freq_char 8 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext   dev acc=49.23%  test acc=50.35%
+python -u run.py --ngrams_char 2 --min_freq_char 9 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext   dev acc=49.79%  test acc=49.98%
+python -u run.py --ngrams_char 2 --min_freq_char 10 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext   dev acc=49.59% test acc=50.45%
+python -u run.py --ngrams_char 2 --min_freq_char 11 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext   dev acc=49.36% test acc=49.96%
+python -u run.py --ngrams_char 2 --min_freq_char 12 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext   dev acc=49.34% test acc=49.78%
+
+python -u run.py --ngrams_word 1 --min_freq_word 1 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=48.50%	test acc=49.12%
+python -u run.py --ngrams_word 1 --min_freq_word 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=50.37%	test acc=50.75%
+python -u run.py --ngrams_word 1 --min_freq_word 3 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=50.58%	test acc=50.39%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=50.97%	test acc=50.79%
+python -u run.py --ngrams_word 1 --min_freq_word 5 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=50.81%	test acc=50.79%
+python -u run.py --ngrams_word 1 --min_freq_word 6 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=50.67%	 test acc=50.75%
+python -u run.py --ngrams_word 2 --min_freq_word 1 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=26.80%	test acc=26.76%
+python -u run.py --ngrams_word 2 --min_freq_word 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=38.12%	test acc=36.78%
+python -u run.py --ngrams_word 2 --min_freq_word 3 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=36.38%	test acc=35.74%
+python -u run.py --ngrams_word 2 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=35.25%	test acc=34.46%
+python -u run.py --ngrams_word 2 --min_freq_word 5 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=33.88%	test acc=33.65%
+python -u run.py --ngrams_word 2 --min_freq_word 6 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=32.12%	test acc=32.34%
+
+python -u run.py --ngrams_char 1 --min_freq_char 6 --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=52.79%	test acc=52.06%
+python -u run.py --ngrams_char 1 2 --min_freq_char 6 3 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=52.72%	 test acc=51.98%
+python -u run.py --ngrams_char 1 2 --min_freq_char 6 9 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=52.38%	 test acc=52.43%
+python -u run.py --ngrams_word 1 2 --min_freq_word 4 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=49.21%	test acc=49.00%
+python -u run.py --ngrams_char 1 2 --min_freq_char 6 3 --ngrams_word 1 2 --min_freq_word 4 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=52.74%	test acc=52.17%
+python -u run.py --ngrams_char 1 2 --min_freq_char 6 9 --ngrams_word 1 2 --min_freq_word 4 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=52.64%	test acc=52.68%
+
+
+
+FastText dropout,0.2->0.5
+python -u run.py --ngrams_char 1 --min_freq_char 1 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.91%	test acc=51.21%
+python -u run.py --ngrams_char 1 --min_freq_char 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.80%	test acc=51.13%
+python -u run.py --ngrams_char 1 --min_freq_char 6 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.78%	test acc=50.86%
+python -u run.py --ngrams_char 1 2 --min_freq_char 6 3 --ngrams_word 1 2 --min_freq_word 4 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=53.54%	test acc=53.00%
+python -u run.py --ngrams_char 1 2 --min_freq_char 6 9 --ngrams_word 1 2 --min_freq_word 4 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=53.15%	test acc=52.35%
+
+
+
+python -u run.py --ngrams_char 1 --min_freq_char 1 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt
+
+
+
+
+
+/data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt
+/data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.merge.bigram
+/data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.merge.char
+/data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.merge.word
+/data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.sogou.bigram
+/data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.sogou.char
+/data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.sogou.word
+/data0/nfs_data/zhaoxi9/pretrained_language_model/Tencent_AILab_ChineseEmbedding.txt
+/data0/nfs_data/zhaoxi9/pretrained_language_model/baike_26g_news_13g_novel_229g.bin
