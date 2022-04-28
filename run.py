@@ -254,9 +254,9 @@ def get_embedding_matrix_from_binary_file(embedding_file, word_index):
 
     emb_mean, emb_std = word2vec.vectors.mean(), word2vec.vectors.std()
     embed_size = word2vec.vectors.shape[1]
-    print(' word2vec.syn0.shape={}'.format(word2vec.vectors.shape))
-    print(' word2vec.syn0.mean={}'.format(emb_mean))
-    print(' word2vec.syn0.std={}'.format(emb_std))
+    print('word2vec.vectors.shape={}'.format(word2vec.vectors.shape))
+    print('word2vec.vectors.mean={}'.format(emb_mean))
+    print('word2vec.vectors.std={}'.format(emb_std))
 
     nb_words = len(word_index)
     print('nb_words={}'.format(nb_words))
@@ -265,7 +265,7 @@ def get_embedding_matrix_from_binary_file(embedding_file, word_index):
     for word, i in word_index.items():
         if i > nb_words:
             continue
-        if word in word2vec.vocab:
+        if word in word2vec.index_to_key:
             embedding_vector = word2vec.word_vec(word)
             if embedding_vector is not None:
                 embedding_matrix[i] = embedding_vector
@@ -354,6 +354,7 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', default=1e-3, type=float)
     parser.add_argument('--embedding_file', type=str)
     parser.add_argument('--freeze', action='store_true')
+    parser.add_argument('--padding_idx', action='store_true')
     parser.add_argument('--model_name', type=str)
     parser.add_argument('--dropout', default=0.5, type=float)
     args, _ = parser.parse_known_args()
@@ -497,9 +498,12 @@ if __name__ == '__main__':
         word_index = {}
         for n_gram_word, i in vocabs[0].items():
             word_index[n_gram_word[0]] = i
+        word_index[UNK] = len(word_index)
         word_index[PAD] = len(word_index)
         embedding_matrix = get_embedding_matrix(args.embedding_file, word_index)
-        embedding_matrix = torch.tensor(embedding_matrix)
+        embedding_matrix = torch.tensor(embedding_matrix.astype('float32'))
+        if args.padding_idx:
+            embedding_matrix[-1, :] = 0 # <PAD> set zero
 
     # # test
     # x_train_index = x_train_index[:32+24]
@@ -514,7 +518,7 @@ if __name__ == '__main__':
 
     model = None
     if args.model_name == 'fasttext':
-        model = FastTextModel(args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+        model = FastTextModel(args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, padding_idx=args.padding_idx, num_embeddings=pad_index+1, embedding_dim=300)
     elif args.model_name == 'textcnn1d':
         model = TextCNN1DModel(256, (2, 3, 4), args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
     elif args.model_name == 'textcnn2d':
@@ -607,7 +611,7 @@ if __name__ == '__main__':
             #     break
 
         print('epoch: {}/{}, {}s, train loss={:.4f}, train acc={:.2f}%, dev loss={:.4f}, dev acc={:.2f}%'.format(
-            epoch + 1, int(epoch_end_time - epoch_start_time), start_epoch + args.epochs,
+            epoch + 1, start_epoch + args.epochs, int(epoch_end_time - epoch_start_time),
             train_loss / train_batch, train_correct * 100.0 / train_total,
             dev_loss / dev_batch, dev_correct * 100.0 / dev_total
         ))

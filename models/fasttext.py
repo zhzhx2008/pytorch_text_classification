@@ -10,22 +10,32 @@ import torch.nn.functional as F
 
 class FastTextModel(nn.Module):
     def __init__(self, dropout, num_classes,
-                 embedding_matrix=None, freeze=False,
+                 embedding_matrix=None, freeze=False, padding_idx=False,
                  num_embeddings=None, embedding_dim=None):
         super(FastTextModel, self).__init__()
-        if embedding_matrix:
-            self.embeding = nn.Embedding.from_pretrained(embedding_matrix,
-                                                         freeze=freeze,
-                                                         padding_idx=embedding_matrix.shape[0]-1)
+        if embedding_matrix is not None:
+            if padding_idx:
+                self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
+                                                              freeze=freeze,
+                                                              padding_idx=embedding_matrix.shape[0] - 1)
+            else:
+                self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
+                                                         freeze=freeze)
         else:
-            self.embeding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings-1)
+            if padding_idx:
+                self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings-1)
+            else:
+                self.embedding = nn.Embedding(num_embeddings, embedding_dim)
+        self.embedding_dim = embedding_dim
+        if embedding_matrix is not None:
+            self.embedding_dim = embedding_matrix.shape[1]
         self.droupout = nn.Dropout(dropout)
-        self.fc1 = nn.Linear(embedding_dim, embedding_dim)
-        self.fc2 = nn.Linear(embedding_dim, num_classes)
+        self.fc1 = nn.Linear(self.embedding_dim, self.embedding_dim)
+        self.fc2 = nn.Linear(self.embedding_dim, num_classes)
 
     def forward(self, x):
         x, seq_lens = x
-        x = self.embeding(x)
+        x = self.embedding(x)
 
         # # SpatialDroupout
         # out = out.permute(0, 2, 1)  # convert to [batch, channels, time]

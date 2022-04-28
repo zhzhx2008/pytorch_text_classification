@@ -1,4 +1,4 @@
-FastText
+FastText dropout 0.2
 python -u run.py --ngrams_char 1 --min_freq_char 1 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.67%	test acc=50.65%
 python -u run.py --ngrams_char 1 --min_freq_char 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.71%	test acc=50.55%
 python -u run.py --ngrams_char 1 --min_freq_char 3 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.37%	test acc=50.59%
@@ -43,17 +43,36 @@ python -u run.py --ngrams_char 1 2 --min_freq_char 6 9 --ngrams_word 1 2 --min_f
 
 
 
-FastText dropout,0.2->0.5
+FastText dropout 0.5
 python -u run.py --ngrams_char 1 --min_freq_char 1 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.91%	test acc=51.21%
 python -u run.py --ngrams_char 1 --min_freq_char 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.80%	test acc=51.13%
 python -u run.py --ngrams_char 1 --min_freq_char 6 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=51.78%	test acc=50.86%
+python -u run.py --ngrams_char 1 --min_freq_char 6 --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext 	dev acc=53.30%	test acc=52.53%
 python -u run.py --ngrams_char 1 2 --min_freq_char 6 3 --ngrams_word 1 2 --min_freq_word 4 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=53.54%	test acc=53.00%
 python -u run.py --ngrams_char 1 2 --min_freq_char 6 9 --ngrams_word 1 2 --min_freq_word 4 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext	dev acc=53.15%	test acc=52.35%
 
 
 
-python -u run.py --ngrams_char 1 --min_freq_char 1 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt
+FastText dropout 0.7
+python -u run.py --ngrams_char 1 --min_freq_char 6 --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext 	dev acc=53.92%	test acc=52.78%
+python -u run.py --ngrams_char 1 2 --min_freq_char 6 3 --ngrams_word 1 2 --min_freq_word 4 2 --batch_size 32 --learning_rate 2e-4 --gpu 1 --model_name fasttext --dropout 0.7   dev acc=53.39%	test acc=52.35%
 
+
+FastText embedding
+python -u run.py --ngrams_char 1 --min_freq_char 6 --batch_size 32 --learning_rate 2e-4 --dropout 0.2 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt   dev acc=51.61%	test acc=51.09%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.2 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt   dev acc=53.92%	test acc=54.46%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.2 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=54.39%	test acc=55.47%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=54.52%	test acc=55.33%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.7 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=54.39%	test acc=55.13%
+
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.merge.bigram --padding_idx   dev acc=54.22%	test acc=55.03%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.merge.char --padding_idx   dev acc=54.12%	test acc=54.71%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.merge.word --padding_idx   dev acc=54.09%	test acc=54.74%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.sogou.bigram --padding_idx   dev acc=53.82%	test acc=54.52%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.sogou.char --padding_idx   dev acc=53.65%	test acc=54.75%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/sgns.sogou.word --padding_idx   dev acc=53.80%	test acc=54.71%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Tencent_AILab_ChineseEmbedding.txt --padding_idx   dev acc=54.14%	test acc=54.52%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name fasttext --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/baike_26g_news_13g_novel_229g.bin --padding_idx   dev acc=54.22%	test acc=53.69%
 
 
 
