@@ -12,8 +12,8 @@ class TransformerModel(nn.Module):
                  num_head, hidden,
                  num_encoder,
                  num_classes,
-                 num_embeddings=None, embedding_dim=None,
-                 embedding_matrix=None, freeze=False):
+                 embedding_matrix=None, freeze=False,
+                 num_embeddings=None, embedding_dim=None):
         super(TransformerModel, self).__init__()
         if embedding_matrix is not None:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
@@ -133,9 +133,9 @@ class Positional_Wise_Feed_Forward(nn.Module):
 
 if __name__ == '__main__':
     net = TransformerModel(pad_size=20, dropout=0.5, device='cpu',
-                           num_head=12, hidden=768,
+                           num_head=12, hidden=300,
                            num_encoder=12, num_classes=15,
-                           num_embeddings=10000, embedding_dim=768)
+                           num_embeddings=10000, embedding_dim=300)
 
     # # need rm Embedding layer
     # from torchinfo import summary

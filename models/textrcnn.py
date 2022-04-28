@@ -8,7 +8,7 @@ import torch.nn.functional as F
 '''Recurrent Convolutional Neural Networks for Text Classification'''
 
 
-class TextRCNN(nn.Module):
+class TextRCNNModel(nn.Module):
     def __init__(self,
                  hidden_size,
                  num_layers,
@@ -17,7 +17,7 @@ class TextRCNN(nn.Module):
                  seq_len,
                  num_embeddings=None, embedding_dim=None,
                  embedding_matrix=None, freeze=False):
-        super(TextRCNN, self).__init__()
+        super(TextRCNNModel, self).__init__()
         if embedding_matrix is not None:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
                                                           freeze=freeze,
@@ -31,7 +31,7 @@ class TextRCNN(nn.Module):
 
     def forward(self, x):
         x, _ = x
-        x = self.embedding(x)  # [batch_size, seq_len, embeding]=[64, 32, 64]
+        x = self.embedding(x)
         out, _ = self.lstm(x)
         out = torch.cat((x, out), 2)
         out = F.relu(out)
@@ -41,7 +41,7 @@ class TextRCNN(nn.Module):
         return out
 
 if __name__ == '__main__':
-    net = TextRCNN(256, 2, 0.2, 15, 20, num_embeddings=10000, embedding_dim=300)
+    net = TextRCNNModel(256, 2, 0.2, 15, 20, num_embeddings=10000, embedding_dim=300)
 
     # # need rm Embedding layer
     # from torchinfo import summary

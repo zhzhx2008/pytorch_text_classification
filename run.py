@@ -15,11 +15,15 @@ import torch
 import torch.nn as nn
 import torch.backends.cudnn
 import codecs
+from gensim.models import KeyedVectors
 from models.fasttext import FastTextModel
 from models.textcnn1d import TextCNN1DModel
 from models.textcnn2d import TextCNN2DModel
 from models.textrnn import TextRNNModel
-from gensim.models import KeyedVectors
+from models.textrcnn import TextRCNNModel
+from models.textrnn_att import TextRNNAttModel
+from models.dpcnn import DPCNNModel
+from models.transformer import TransformerModel
 
 
 def shuffle_data(*arrays):
@@ -348,7 +352,8 @@ if __name__ == '__main__':
     parser.add_argument('--max_sent_len', type=int)
     parser.add_argument('--learning_rate', default=1e-3, type=float)
     parser.add_argument('--embedding_file', type=str)
-    parser.add_argument('--trainalbe', action='store_true')
+    parser.add_argument('--freeze', action='store_true')
+    parser.add_argument('--model_name', type=str)
     args, _ = parser.parse_known_args()
     print(args)
     # exit(0)
@@ -502,15 +507,27 @@ if __name__ == '__main__':
     # y_dev_index = y_dev_index[:32 + 24]
     # y_test_index =y_test_index[:32 + 24]
 
-    # model = FastTextModel(0.2, num_classes, num_embeddings=pad_index+1, embedding_dim=300)
-    # model = TextCNN1DModel(256, (2, 3, 4), 0.2, num_classes, num_embeddings=pad_index+1, embedding_dim=300)
-    # model = TextCNN2DModel(256, (2, 3, 4), 0.2, num_classes, num_embeddings=pad_index+1, embedding_dim=300)
-    # model = TextLSTMModel(256, 2, 0.2, num_classes, num_embeddings=pad_index+1, embedding_dim=300)
-
-    model = FastTextModel(0.2, num_classes, embedding_matrix=embedding_matrix, trainalbe=args.trainalbe)
-    # model = TextCNN1DModel(256, (2, 3 ,4), 0.2, num_classes, embedding_matrix=embedding_matrix, trainalbe=args.trainalbe)
-    # model = TextCNN2DModel(256, (2, 3, 4), 0.2, num_classes, embedding_matrix=embedding_matrix, trainalbe=args.trainalbe)
-    # model = TextLSTMModel(256, 2, 0.2, num_classes, embedding_matrix=embedding_matrix, trainalbe=args.trainalbe)
+    model = None
+    if args.model_name == 'fasttext':
+        model = FastTextModel(0.2, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+    elif args.model_name == 'textcnn1d':
+        model = TextCNN1DModel(256, (2, 3, 4), 0.2, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+    elif args.model_name == 'textcnn2d':
+        model = TextCNN2DModel(256, (2, 3, 4), 0.2, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+    elif args.model_name == 'textrnn':
+        model = TextRNNModel(256, 2, 0.2, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+    elif args.model_name == 'textrcnn':
+        model = TextRCNNModel(256, 2, 0.2, num_classes, max_sent_len, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+    elif args.model_name == 'textrnn_att':
+        model = TextRNNAttModel(256, 2, 0.2, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+    elif args.model_name == 'dpcnn':
+        model = DPCNNModel(256, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
+    elif args.model_name == 'transformer':
+        model = TransformerModel(pad_size=max_sent_len, dropout=0.2, device=device, num_head=12, hidden=768, num_encoder=12, num_classes=15,
+                                 embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=768)
+    else:
+        print('no support model_name={}!'.format(args.model_name))
+        exit(2)
 
     print(model)
     model = model.to(device)
