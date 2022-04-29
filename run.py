@@ -291,7 +291,7 @@ def get_embedding_matrix_from_binary_file(embedding_file, word_index):
 
 
 def get_embedding_matrix(embedding_file, word_index):
-    if args.embedding_file.endswith('.bin'):
+    if embedding_file.endswith('.bin'):
         return get_embedding_matrix_from_binary_file(embedding_file, word_index)
     else:
         return get_embedding_matrix_from_txt_file(embedding_file, word_index)
@@ -354,7 +354,7 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', default=1e-3, type=float)
     parser.add_argument('--embedding_file', type=str)
     parser.add_argument('--freeze', action='store_true')
-    parser.add_argument('--padding_idx', action='store_true')
+    parser.add_argument('--padding_idx_zero', action='store_true')
     parser.add_argument('--model_name', type=str)
     parser.add_argument('--dropout', default=0.5, type=float)
     args, _ = parser.parse_known_args()
@@ -362,13 +362,33 @@ if __name__ == '__main__':
     # exit(0)
 
     seed = args.seed
+    gpu = args.gpu
+    ngrams_word = args.ngrams_word
+    min_freq_word = args.min_freq_word
+    max_size_word = args.max_size_word
+    ngrams_char = args.ngrams_char
+    min_freq_char = args.min_freq_char
+    max_size_char = args.max_size_char
+    batch_size = args.batch_size
+    epochs = args.epochs
+    patience = args.patience
+    num_char_no_split = args.num_char_no_split
+    max_sent_len_ratio = args.max_sent_len_ratio
+    max_sent_len = args.max_sent_len
+    learning_rate = args.learning_rate
+    embedding_file = args.embedding_file
+    freeze = args.freeze
+    padding_idx_zero = args.padding_idx_zero
+    model_name = args.model_name
+    dropout = args.dropout
+
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = gpu
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     print('device={}'.format(device))
 
@@ -376,14 +396,14 @@ if __name__ == '__main__':
     print("loading data...")
     data_train = './data/tnews_public/train.json'
     data_test = './data/tnews_public/dev.json'  # test.json has no label, using dev.json repalced.
-    sentences_word, sentences_char, labels = build_dataset(data_train, num_char_no_split=args.num_char_no_split)
+    sentences_word, sentences_char, labels = build_dataset(data_train, num_char_no_split=num_char_no_split)
     data_train_word, data_dev_word, data_train_char, data_dev_char, labels_train, labels_dev = train_test_split(
         sentences_word, sentences_char, labels, test_size=0.1, shuffle=True, stratify=labels
     )
     # shuffle train/dev
     data_train_word, data_train_char, labels_train = shuffle_data(data_train_word, data_train_char, labels_train)
     data_dev_word, data_dev_char, labels_dev = shuffle_data(data_dev_word, data_dev_char, labels_dev)
-    data_test_word, data_test_char, labels_test = build_dataset(data_test, num_char_no_split=args.num_char_no_split)
+    data_test_word, data_test_char, labels_test = build_dataset(data_test, num_char_no_split=num_char_no_split)
 
     print('train size={}'.format(len(data_train_word)))
     print('dev size={}'.format(len(data_dev_word)))
@@ -415,23 +435,23 @@ if __name__ == '__main__':
     vocabs_word = []
     vocabs_char = []
     ngrams_word = None
-    if args.ngrams_word:
-        ngrams_word = args.ngrams_word
+    if ngrams_word:
+        ngrams_word = ngrams_word
         # if not isinstance(ngrams_word, list): ngrams_word=[ngrams_word]
         ngrams_word.sort()
     ngrams_char = None
-    if args.ngrams_char:
-        ngrams_char = args.ngrams_char
+    if ngrams_char:
+        ngrams_char = ngrams_char
         # if not isinstance(ngrams_char, list): ngrams_char = [ngrams_char]
         ngrams_char.sort()
 
-    if args.ngrams_word and args.ngrams_char:
+    if ngrams_word and ngrams_char:
         x_train_word_index_ngram, vocabs_word = build_x_index(data_train_word, ngrams_word, vocabs=vocabs_word,
-                                                              max_size=args.max_size_word, min_freq=args.min_freq_word)
+                                                              max_size=max_size_word, min_freq=min_freq_word)
         x_dev_word_index_ngram, _ = build_x_index(data_dev_word, ngrams_word, vocabs=vocabs_word,
-                                                  max_size=args.max_size_word, min_freq=args.min_freq_word)
+                                                  max_size=max_size_word, min_freq=min_freq_word)
         x_test_word_index_ngram, _ = build_x_index(data_test_word, ngrams_word, vocabs=vocabs_word,
-                                                   max_size=args.max_size_word, min_freq=args.min_freq_word)
+                                                   max_size=max_size_word, min_freq=min_freq_word)
 
         append_idx = 0
         for v in vocabs_word:
@@ -439,26 +459,26 @@ if __name__ == '__main__':
 
         x_train_char_index_ngram, vocabs_char = build_x_index(data_train_char, ngrams_char, vocabs=vocabs_char,
                                                               idx_start=append_idx,
-                                                              max_size=args.max_size_char, min_freq=args.min_freq_char)
+                                                              max_size=max_size_char, min_freq=min_freq_char)
         x_dev_char_index_ngram, _ = build_x_index(data_dev_char, ngrams_char, vocabs=vocabs_char,
-                                                  max_size=args.max_size_char, min_freq=args.min_freq_char)
+                                                  max_size=max_size_char, min_freq=min_freq_char)
         x_test_char_index_ngram, _ = build_x_index(data_test_char, ngrams_char, vocabs=vocabs_char,
-                                                   max_size=args.max_size_char, min_freq=args.min_freq_char)
+                                                   max_size=max_size_char, min_freq=min_freq_char)
 
         x_train_index = row_concate(x_train_word_index_ngram, x_train_char_index_ngram)
         x_dev_index = row_concate(x_dev_word_index_ngram, x_dev_char_index_ngram)
         x_test_index = row_concate(x_test_word_index_ngram, x_test_char_index_ngram)
-    elif args.ngrams_word:
+    elif ngrams_word:
         x_train_index, vocabs_word = build_x_index(data_train_word, ngrams_word, vocabs=vocabs_word,
-                                                   max_size=args.max_size_word, min_freq=args.min_freq_word)
+                                                   max_size=max_size_word, min_freq=min_freq_word)
         x_dev_index, _ = build_x_index(data_dev_word, ngrams_word, vocabs=vocabs_word,
-                                       max_size=args.max_size_word, min_freq=args.min_freq_word)
+                                       max_size=max_size_word, min_freq=min_freq_word)
         x_test_index, _ = build_x_index(data_test_word, ngrams_word, vocabs=vocabs_word,
-                                        max_size=args.max_size_word, min_freq=args.min_freq_word)
-    elif args.ngrams_char:
-        x_train_index, vocabs_char = build_x_index(data_train_char, ngrams_char, vocabs=vocabs_char, max_size=args.max_size_char, min_freq=args.min_freq_char)
-        x_dev_index, _ = build_x_index(data_dev_char, ngrams_char, vocabs=vocabs_char, max_size=args.max_size_char, min_freq=args.min_freq_char)
-        x_test_index, _ = build_x_index(data_test_char, ngrams_char, vocabs=vocabs_char, max_size=args.max_size_char, min_freq=args.min_freq_char)
+                                        max_size=max_size_word, min_freq=min_freq_word)
+    elif ngrams_char:
+        x_train_index, vocabs_char = build_x_index(data_train_char, ngrams_char, vocabs=vocabs_char, max_size=max_size_char, min_freq=min_freq_char)
+        x_dev_index, _ = build_x_index(data_dev_char, ngrams_char, vocabs=vocabs_char, max_size=max_size_char, min_freq=min_freq_char)
+        x_test_index, _ = build_x_index(data_test_char, ngrams_char, vocabs=vocabs_char, max_size=max_size_char, min_freq=min_freq_char)
     else:
         print('error, ngrams_word or ngrams_char necessary!')
 
@@ -467,31 +487,36 @@ if __name__ == '__main__':
         if len(i) > max_sent_len:
             max_sent_len = len(i)
     print('max_sent_len={}'.format(max_sent_len))
-    if args.max_sent_len_ratio and 0 < args.max_sent_len_ratio < 1:
-        max_sent_len = cal_sent_len(x_train_index, args.max_sent_len_ratio)
+    if max_sent_len_ratio and 0 < max_sent_len_ratio < 1:
+        max_sent_len = cal_sent_len(x_train_index, max_sent_len_ratio)
         print('max_sent_len={}'.format(max_sent_len))
-    if args.max_sent_len:
-        max_sent_len = args.max_sent_len
+    if max_sent_len:
+        max_sent_len = max_sent_len
         print('max_sent_len={}'.format(max_sent_len))
     # exit(0)
 
     pad_index = 0
-    if args.ngrams_word:
+    if ngrams_word:
         for idx, v in enumerate(vocabs_word):
             print('vocabs_word_{} size={}'.format(idx, len(v)))
             pad_index += len(v)
-    if args.ngrams_char:
+    if ngrams_char:
         for idx, v in enumerate(vocabs_char):
             print('vocabs_char_{} size={}'.format(idx, len(v)))
             pad_index += len(v)
     print('pad_index={}'.format(pad_index))
+
+    padding_idx = None
+    if padding_idx_zero:
+        padding_idx = pad_index
+        print('random embedding_matrix, padding_idx={}'.format(padding_idx))
 
     x_train_index, x_train_seq_lens = sent_pad(x_train_index, max_sent_len, pad_index)
     x_dev_index, x_dev_seq_lens = sent_pad(x_dev_index, max_sent_len, pad_index)
     x_test_index, x_test_seq_lens = sent_pad(x_test_index, max_sent_len, pad_index)
 
     embedding_matrix = None
-    if ((args.ngrams_word and args.ngrams_word == [1]) or (args.ngrams_char and args.ngrams_char == [1])) and args.embedding_file:
+    if ((ngrams_word and ngrams_word == [1]) or (ngrams_char and ngrams_char == [1])) and embedding_file:
         vocabs = vocabs_word
         if vocabs_char:
             vocabs = vocabs_char
@@ -500,10 +525,12 @@ if __name__ == '__main__':
             word_index[n_gram_word[0]] = i
         word_index[UNK] = len(word_index)
         word_index[PAD] = len(word_index)
-        embedding_matrix = get_embedding_matrix(args.embedding_file, word_index)
+        embedding_matrix = get_embedding_matrix(embedding_file, word_index)
         embedding_matrix = torch.tensor(embedding_matrix.astype('float32'))
-        if args.padding_idx:
+        if padding_idx_zero:
             embedding_matrix[-1, :] = 0 # <PAD> set zero
+            padding_idx = embedding_matrix.shape[0] - 1
+            print('pretrained embedding_matrix, padding_idx={}'.format(padding_idx))
 
     # # test
     # x_train_index = x_train_index[:32+24]
@@ -517,30 +544,45 @@ if __name__ == '__main__':
     # y_test_index =y_test_index[:32 + 24]
 
     model = None
-    if args.model_name == 'fasttext':
-        model = FastTextModel(args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, padding_idx=args.padding_idx, num_embeddings=pad_index+1, embedding_dim=300)
-    elif args.model_name == 'textcnn1d':
-        model = TextCNN1DModel(256, (2, 3, 4), args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
-    elif args.model_name == 'textcnn2d':
-        model = TextCNN2DModel(256, (2, 3, 4), args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
-    elif args.model_name == 'textrnn':
-        model = TextRNNModel(256, 2, args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
-    elif args.model_name == 'textrcnn':
-        model = TextRCNNModel(256, 2, args.dropout, num_classes, max_sent_len, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
-    elif args.model_name == 'textrnn_att':
-        model = TextRNNAttModel(256, 2, args.dropout, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
-    elif args.model_name == 'dpcnn':
-        model = DPCNNModel(256, num_classes, embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=300)
-    elif args.model_name == 'transformer':
-        model = TransformerModel(pad_size=max_sent_len, dropout=0.2, device=device, num_head=12, hidden=768, num_encoder=12, num_classes=15,
-                                 embedding_matrix=embedding_matrix, freeze=args.freeze, num_embeddings=pad_index+1, embedding_dim=768)
+    if model_name == 'fasttext':
+        model = FastTextModel(dropout, num_classes,
+                              embedding_matrix=embedding_matrix, freeze=freeze, padding_idx=padding_idx,
+                              num_embeddings=pad_index+1, embedding_dim=300)
+    elif model_name == 'textcnn1d':
+        model = TextCNN1DModel(256, (2, 3, 4), dropout, num_classes,
+                               embedding_matrix=embedding_matrix, freeze=freeze, padding_idx=padding_idx,
+                               num_embeddings=pad_index+1, embedding_dim=300)
+    elif model_name == 'textcnn2d':
+        model = TextCNN2DModel(256, (2, 3, 4), dropout, num_classes,
+                               embedding_matrix=embedding_matrix, freeze=freeze, padding_idx=padding_idx,
+                               num_embeddings=pad_index+1, embedding_dim=300)
+    elif model_name == 'textrnn':
+        model = TextRNNModel(256, 2, dropout, num_classes,
+                             embedding_matrix=embedding_matrix, freeze=freeze, padding_idx=padding_idx,
+                             num_embeddings=pad_index+1, embedding_dim=300)
+    elif model_name == 'textrcnn':
+        model = TextRCNNModel(256, 2, dropout, num_classes, max_sent_len,
+                              embedding_matrix=embedding_matrix, freeze=freeze, padding_idx=padding_idx,
+                              num_embeddings=pad_index+1, embedding_dim=300)
+    elif model_name == 'textrnn_att':
+        model = TextRNNAttModel(256, 2, dropout, num_classes,
+                                embedding_matrix=embedding_matrix, freeze=freeze, padding_idx=padding_idx,
+                                num_embeddings=pad_index+1, embedding_dim=300)
+    elif model_name == 'dpcnn':
+        model = DPCNNModel(256, num_classes,
+                           embedding_matrix=embedding_matrix, freeze=freeze, padding_idx=padding_idx,
+                           num_embeddings=pad_index+1, embedding_dim=300)
+    elif model_name == 'transformer':
+        model = TransformerModel(pad_size=max_sent_len, dropout=0.2, device=device,
+                                 num_head=12, hidden=768, num_encoder=12, num_classes=15,
+                                 embedding_matrix=embedding_matrix, freeze=freeze, padding_idx=padding_idx,
+                                 num_embeddings=pad_index+1, embedding_dim=768)
     else:
-        print('no support model_name={}!'.format(args.model_name))
+        print('no support model_name={}!'.format(model_name))
         exit(2)
 
     print(model)
     model = model.to(device)
-    learning_rate = args.learning_rate
     best_acc = 0
     early_stop_patience = 0
     start_epoch = 0
@@ -555,8 +597,8 @@ if __name__ == '__main__':
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
-    for epoch in range(start_epoch, start_epoch + args.epochs):
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+    for epoch in range(start_epoch, start_epoch + epochs):
         epoch_start_time = time.time()
         # trainset
         model.train()
@@ -566,7 +608,7 @@ if __name__ == '__main__':
         train_batch = 0
         # for batch_idx, (inputs, targets) in enumerate(trainloader):
         for batch_idx, (inputs, targets) in enumerate(
-                DatasetIterater((x_train_index, x_train_seq_lens), y_train_index, batch_size=args.batch_size, device=device)
+                DatasetIterater((x_train_index, x_train_seq_lens), y_train_index, batch_size=batch_size, device=device)
         ):
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -594,7 +636,7 @@ if __name__ == '__main__':
         dev_batch = 0
         # for batch_idx, (inputs, targets) in enumerate(devloader):
         for batch_idx, (inputs, targets) in enumerate(
-                DatasetIterater((x_dev_index, x_dev_seq_lens), y_dev_index, batch_size=args.batch_size, device=device)
+                DatasetIterater((x_dev_index, x_dev_seq_lens), y_dev_index, batch_size=batch_size, device=device)
         ):
             outputs = model(inputs)
             loss = criterion(outputs, targets)
@@ -611,7 +653,7 @@ if __name__ == '__main__':
             #     break
 
         print('epoch: {}/{}, {}s, train loss={:.4f}, train acc={:.2f}%, dev loss={:.4f}, dev acc={:.2f}%'.format(
-            epoch + 1, start_epoch + args.epochs, int(epoch_end_time - epoch_start_time),
+            epoch + 1, start_epoch + epochs, int(epoch_end_time - epoch_start_time),
             train_loss / train_batch, train_correct * 100.0 / train_total,
             dev_loss / dev_batch, dev_correct * 100.0 / dev_total
         ))
@@ -638,7 +680,7 @@ if __name__ == '__main__':
             test_batch = 0
             # for batch_idx, (inputs, targets) in enumerate(testloader):
             for batch_idx, (inputs, targets) in enumerate(
-                    DatasetIterater((x_test_index, x_test_seq_lens), y_test_index, batch_size=args.batch_size, device=device)
+                    DatasetIterater((x_test_index, x_test_seq_lens), y_test_index, batch_size=batch_size, device=device)
             ):
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
@@ -655,7 +697,7 @@ if __name__ == '__main__':
             ))
         else:
             early_stop_patience += 1
-            if early_stop_patience >= args.patience:
+            if early_stop_patience >= patience:
                 break
 
         # scheduler.step()

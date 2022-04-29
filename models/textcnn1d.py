@@ -10,18 +10,19 @@ class TextCNN1DModel(nn.Module):
                  filter_sizes,
                  dropout,
                  num_classes,
-                 num_embeddings=None, embedding_dim=None,
+                 num_embeddings=None, embedding_dim=None, padding_idx=False,
                  embedding_matrix=None, freeze=False):
         super(TextCNN1DModel, self).__init__()
         if embedding_matrix is not None:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
                                                           freeze=freeze,
-                                                          padding_idx=embedding_matrix.shape[0]-1)
+                                                          padding_idx=padding_idx)
         else:
-            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings-1)
+            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)
+        self.embedding_dim = embedding_matrix.shape[1] if embedding_matrix is not None else embedding_dim
         self.convs = nn.ModuleList(
             [
-                nn.Conv1d(embedding_dim, num_filters, k, stride=1) for k in filter_sizes
+                nn.Conv1d(self.embedding_dim, num_filters, k, stride=1) for k in filter_sizes
                 # nn.Conv2d(1, num_filters, (k, embedding_dim)) for k in filter_sizes
             ]
         )

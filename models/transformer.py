@@ -12,18 +12,16 @@ class TransformerModel(nn.Module):
                  num_head, hidden,
                  num_encoder,
                  num_classes,
-                 embedding_matrix=None, freeze=False,
+                 embedding_matrix=None, freeze=False, padding_idx=False,
                  num_embeddings=None, embedding_dim=None):
         super(TransformerModel, self).__init__()
         if embedding_matrix is not None:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
                                                           freeze=freeze,
-                                                          padding_idx=embedding_matrix.shape[0] - 1)
+                                                          padding_idx=padding_idx)
         else:
-            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings - 1)
-        self.embedding_dim = embedding_dim
-        if embedding_matrix is not None:
-            self.embedding_dim = embedding_matrix.shape[1]
+            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)
+        self.embedding_dim = embedding_matrix.shape[1] if embedding_matrix is not None else embedding_dim
         self.position_embedding = Positional_Encoding(self.embedding_dim, pad_size=pad_size, dropout=dropout, device=device)
         self.encoder = Encoder(self.embedding_dim, num_head, hidden, dropout)
         self.encoders = nn.ModuleList(copy.deepcopy(self.encoder) for _ in range(num_encoder))

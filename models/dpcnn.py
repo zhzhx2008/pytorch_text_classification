@@ -10,18 +10,16 @@ class DPCNNModel(nn.Module):
     def __init__(self,
                  num_filters,
                  num_classes,
-                 num_embeddings=None, embedding_dim=None,
+                 num_embeddings=None, embedding_dim=None, padding_idx=None,
                  embedding_matrix=None, freeze=False):
         super(DPCNNModel, self).__init__()
         if embedding_matrix is not None:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
                                                           freeze=freeze,
-                                                          padding_idx=embedding_matrix.shape[0] - 1)
+                                                          padding_idx=padding_idx)
         else:
-            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings - 1)
-        self.embedding_dim =embedding_dim
-        if embedding_matrix is not None:
-            self.embedding_dim = embedding_matrix.shape[1]
+            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)
+        self.embedding_dim = embedding_matrix.shape[1] if embedding_matrix is not None else embedding_dim
         self.conv_region = nn.Conv2d(1, num_filters, (3, self.embedding_dim), stride=(1, 1))
         self.conv = nn.Conv2d(num_filters, num_filters, (3, 1), stride=(1, 1))
         self.max_pool = nn.MaxPool2d(kernel_size=(3, 1), stride=2)

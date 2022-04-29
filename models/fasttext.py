@@ -14,21 +14,12 @@ class FastTextModel(nn.Module):
                  num_embeddings=None, embedding_dim=None):
         super(FastTextModel, self).__init__()
         if embedding_matrix is not None:
-            if padding_idx:
-                self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
-                                                              freeze=freeze,
-                                                              padding_idx=embedding_matrix.shape[0] - 1)
-            else:
-                self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
-                                                         freeze=freeze)
+            self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
+                                                          freeze=freeze,
+                                                          padding_idx=padding_idx)
         else:
-            if padding_idx:
-                self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings-1)
-            else:
-                self.embedding = nn.Embedding(num_embeddings, embedding_dim)
-        self.embedding_dim = embedding_dim
-        if embedding_matrix is not None:
-            self.embedding_dim = embedding_matrix.shape[1]
+            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)
+        self.embedding_dim = embedding_matrix.shape[1] if embedding_matrix is not None else embedding_dim
         self.droupout = nn.Dropout(dropout)
         self.fc1 = nn.Linear(self.embedding_dim, self.embedding_dim)
         self.fc2 = nn.Linear(self.embedding_dim, num_classes)

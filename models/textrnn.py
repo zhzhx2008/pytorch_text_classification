@@ -14,16 +14,17 @@ class TextRNNModel(nn.Module):
                  num_layers,
                  dropout,
                  num_classes,
-                 num_embeddings=None, embedding_dim=None,
+                 num_embeddings=None, embedding_dim=None, padding_idx=False,
                  embedding_matrix=None, freeze=False):
         super(TextRNNModel, self).__init__()
         if embedding_matrix is not None:
             self.embedding = nn.Embedding.from_pretrained(embedding_matrix,
                                                           freeze=freeze,
-                                                          padding_idx=embedding_matrix.shape[0] - 1)
+                                                          padding_idx=padding_idx)
         else:
-            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=num_embeddings - 1)
-        self.lstm = nn.LSTM(embedding_dim, hidden_size, num_layers, bidirectional=True, batch_first=True, dropout=dropout)
+            self.embedding = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)
+        self.embedding_dim = embedding_matrix.shape[1] if embedding_matrix is not None else embedding_dim
+        self.lstm = nn.LSTM(self.embedding_dim, hidden_size, num_layers, bidirectional=True, batch_first=True, dropout=dropout)
         self.fc = nn.Linear(hidden_size * 2, num_classes)
 
     def forward(self, x):
