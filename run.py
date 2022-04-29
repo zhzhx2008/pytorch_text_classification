@@ -434,12 +434,12 @@ if __name__ == '__main__':
     x_test_index = None
     vocabs_word = []
     vocabs_char = []
-    ngrams_word = None
+    # ngrams_word = None
     if ngrams_word:
         ngrams_word = ngrams_word
         # if not isinstance(ngrams_word, list): ngrams_word=[ngrams_word]
         ngrams_word.sort()
-    ngrams_char = None
+    # ngrams_char = None
     if ngrams_char:
         ngrams_char = ngrams_char
         # if not isinstance(ngrams_char, list): ngrams_char = [ngrams_char]
@@ -573,8 +573,8 @@ if __name__ == '__main__':
                            embedding_matrix=embedding_matrix, freeze=freeze, padding_idx=padding_idx,
                            num_embeddings=pad_index+1, embedding_dim=300)
     elif model_name == 'transformer':
-        model = TransformerModel(pad_size=max_sent_len, dropout=0.2, device=device,
-                                 num_head=12, hidden=768, num_encoder=12, num_classes=15,
+        model = TransformerModel(pad_size=max_sent_len, dropout=dropout, device=device,
+                                 num_head=12, hidden=768, num_encoder=12, num_classes=num_classes,
                                  embedding_matrix=embedding_matrix, freeze=freeze, padding_idx=padding_idx,
                                  num_embeddings=pad_index+1, embedding_dim=768)
     else:
