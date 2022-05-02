@@ -87,25 +87,29 @@ python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_ra
 
 
 TextCNN1D
-python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name textcnn1d --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=%	test acc=%
-
-
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name textcnn1d --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=55.27%	test acc=55.37%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name textcnn1d --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx --freeze   dev acc=55.10%	test acc=54.74%
 
 TextCNN2D
-python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name textcnn2d --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=%	test acc=%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name textcnn2d --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=54.97%	test acc=55.70%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name textcnn2d --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx --freeze   dev acc=55.38%	test acc=55.22%
 
 TextRNN
-python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name textrnn --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=%	test acc=%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name textrnn --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=52.53%	test acc=53.10%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name textrnn --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx --freeze   dev acc=53.28%	test acc=53.92%
 
 TextRNN_ATT
-python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name textrnn_att --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=%	test acc=%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name textrnn_att --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=53.47%	test acc=54.43%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name textrnn_att --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx --freeze   dev acc=53.49%	test acc=53.25%
 
 TextRCNN
-python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name textrcnn --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=%	test acc=%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name textrcnn --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=54.03%	test acc=54.40%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name textrcnn --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx --freeze   dev acc=53.34%	test acc=54.45%
 
 DPCNN
-python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name dpcnn --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=%	test acc=%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name dpcnn --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=53.13%	test acc=53.83%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name dpcnn --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx --freeze   dev acc=53.24%	test acc=53.64%
 
 Transformer
-python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 1 --model_name transformer --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=%	test acc=%
-
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name transformer --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx   dev acc=53.34%	test acc=53.32%
+python -u run.py --ngrams_word 1 --min_freq_word 4 --batch_size 32 --learning_rate 2e-4 --dropout 0.5 --gpu 0 --model_name transformer --embedding_file /data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-Word-Vectors/merge_sgns_bigram_char300.txt --padding_idx --freeze   dev acc=52.79%	test acc=52.98%
