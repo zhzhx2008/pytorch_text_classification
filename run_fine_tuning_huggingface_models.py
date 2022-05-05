@@ -26,13 +26,13 @@ class CustomModel(nn.Module):
                  dropout,
                  num_classes,
                  model_name, freeze=False):
-        super().__init__()
-        self.model = AutoModel.from_pretrained(model_name)
+        super(CustomModel, self).__init__()
+        self.pretrained_model = AutoModel.from_pretrained(model_name)
         if freeze:
-            for param in self.model.base_model.parameters():
+            for k, param in self.pretrained_model.named_parameters():
                 param.requires_grad = False
         self.fc_dropout = nn.Dropout(dropout)
-        self.fc = nn.Linear(self.model.config.hidden_size, num_classes)
+        self.fc = nn.Linear(self.pretrained_model.config.hidden_size, num_classes)
         # self._init_weights(self.fc)
 
     # def _init_weights(self, module):
@@ -49,13 +49,15 @@ class CustomModel(nn.Module):
     #         module.weight.data.fill_(1.0)
 
     def feature(self, inputs):
-        outputs = self.model(**inputs)
-        pooler_output = outputs[1]
+        outputs = self.pretrained_model(**inputs)
+        pooler_output = outputs[0]
         return pooler_output
 
     def forward(self, inputs):
-        feature = self.feature(inputs)
-        output = self.fc(self.fc_dropout(feature))
+        out = self.feature(inputs)
+        out = out.mean(dim=1)
+        # out = out.max(dim=1).values
+        output = self.fc(self.fc_dropout(out))
         return output
 
 
@@ -313,6 +315,9 @@ if __name__ == '__main__':
 
     model = CustomModel(0.5, num_classes, model_name, freeze=freeze)
     print(model)
+    for k, v in model.named_parameters():
+        print(k, v.requires_grad)
+    # exit(0)
     model = model.to(device)
     best_acc = 0
     early_stop_patience = 0
@@ -327,7 +332,8 @@ if __name__ == '__main__':
     #     start_epoch = checkpoint['epoch']
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate)
+
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     for epoch in range(start_epoch, start_epoch + epochs):
         epoch_start_time = time.time()
