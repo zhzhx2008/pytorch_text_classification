@@ -15,16 +15,7 @@ import torch
 import torch.nn as nn
 import torch.backends.cudnn
 import codecs
-from transformers import AutoTokenizer, AutoModel, BertTokenizer, AlbertModel
-
-from models.fasttext import FastTextModel
-from models.textcnn1d import TextCNN1DModel
-from models.textcnn2d import TextCNN2DModel
-from models.textrnn import TextRNNModel
-from models.textrcnn import TextRCNNModel
-from models.textrnn_att import TextRNNAttModel
-from models.dpcnn import DPCNNModel
-from models.transformer import TransformerModel
+from transformers import AutoModel, AutoTokenizer, BertTokenizer, XLNetTokenizer
 
 
 # ====================================================
@@ -32,14 +23,13 @@ from models.transformer import TransformerModel
 # ====================================================
 class CustomModel(nn.Module):
     def __init__(self,
-                 hidden_size,
                  dropout,
                  num_classes,
                  model_name, freeze=False):
         super().__init__()
-        self.model = AlbertModel.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name)
         if freeze:
-            for param in model.base_model.parameters():
+            for param in self.model.base_model.parameters():
                 param.requires_grad = False
         self.fc_dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(self.model.config.hidden_size, num_classes)
@@ -290,31 +280,38 @@ if __name__ == '__main__':
     y_dev_index = to_categorical(y_dev_index, num_classes)
     y_test_index = to_categorical(y_test_index, num_classes)
 
-    tokenizer = BertTokenizer.from_pretrained(model_name)
-    sents_len = []
+    tokenizer = None
+    if 'clue_xlnet' in model_name:
+        tokenizer = XLNetTokenizer.from_pretrained(model_name)
+    elif 'clue_' in model_name:
+        tokenizer = BertTokenizer.from_pretrained(model_name)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+    data_train_index = []
     for text in data_train:
-        sents_len.append(len(tokenizer(text, add_special_tokens=False)['input_ids']))
-    max_sent_len = max(sents_len) + 2   # cls sep
+        data_train_index.append(tokenizer(text)['input_ids'])
 
-    data_train_inputs = tokenizer(data_train, add_special_tokens=True, max_length=max_sent_len,
+    max_sent_len = 0  # default max len
+    for sent_index in data_train_index:
+        if len(sent_index) > max_sent_len:
+            max_sent_len = len(sent_index)
+    print('max_sent_len={}'.format(max_sent_len))
+    if max_sent_len_ratio and 0 < max_sent_len_ratio < 1:
+        max_sent_len = cal_sent_len(data_train_index, max_sent_len_ratio)
+        print('max_sent_len={}'.format(max_sent_len))
+    if max_sent_len:
+        max_sent_len = max_sent_len
+        print('max_sent_len={}'.format(max_sent_len))
+    # exit(0)
+
+    data_train_inputs = tokenizer(data_train, add_special_tokens=True, max_length=max_sent_len, truncation=True,
                                   padding="max_length", return_offsets_mapping=False)
-    data_dev_inputs = tokenizer(data_dev, add_special_tokens=True, max_length=max_sent_len,
+    data_dev_inputs = tokenizer(data_dev, add_special_tokens=True, max_length=max_sent_len, truncation=True,
                                 padding="max_length", return_offsets_mapping=False)
-    data_test_inputs = tokenizer(data_test, add_special_tokens=True, max_length=max_sent_len,
+    data_test_inputs = tokenizer(data_test, add_special_tokens=True, max_length=max_sent_len, truncation=True,
                                  padding="max_length", return_offsets_mapping=False)
 
-    # # test
-    # x_train_index = x_train_index[:32+24]
-    # x_dev_index = x_dev_index[:32+24]
-    # x_test_index = x_test_index[:32+24]
-    # x_train_seq_lens = x_train_seq_lens[:32 + 24]
-    # x_dev_seq_lens = x_dev_seq_lens[:32 + 24]
-    # x_test_seq_lens = x_test_seq_lens[:32 + 24]
-    # y_train_index = y_train_index[:32 + 24]
-    # y_dev_index = y_dev_index[:32 + 24]
-    # y_test_index =y_test_index[:32 + 24]
-
-    model = CustomModel(256, 0.5, num_classes, model_name, freeze=freeze)
+    model = CustomModel(0.5, num_classes, model_name, freeze=freeze)
     print(model)
     model = model.to(device)
     best_acc = 0
