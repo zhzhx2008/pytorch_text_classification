@@ -205,14 +205,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument("--gpu", default="", type=str)
-    parser.add_argument('--batch_size', default=32, type=int)
+    parser.add_argument('--batch_size', default=256, type=int)
     parser.add_argument('--epochs', default=10000, type=int)
-    parser.add_argument('--patience', default=10, type=int)
+    parser.add_argument('--patience', default=5, type=int)
     parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
     parser.add_argument('--max_sent_len', type=int)
     parser.add_argument('--learning_rate', default=1e-3, type=float)
     parser.add_argument('--freeze', action='store_true')
-    parser.add_argument('--model_name', default='clue/albert_chinese_tiny', type=str)
+    parser.add_argument('--model_name', type=str)
     parser.add_argument('--dropout', default=0.5, type=float)
     args, _ = parser.parse_known_args()
     print(args)
@@ -229,6 +229,10 @@ if __name__ == '__main__':
     freeze = args.freeze
     model_name = args.model_name
     dropout = args.dropout
+
+    if not model_name:
+        print('no model_name!')
+        exit(0)
 
     random.seed(seed)
     np.random.seed(seed)

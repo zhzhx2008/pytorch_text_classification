@@ -1,0 +1,13 @@
+#!/bin/bash
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-bert-wwm --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-bert-wwm-ext --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-electra-180g-base-discriminator --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-electra-180g-large-discriminator --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-electra-180g-small-discriminator --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-electra-180g-small-ex-discriminator --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-electra-base-discriminator --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-electra-base-generator --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-electra-large-discriminator --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-electra-large-generator --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-electra-small-ex-discriminator --gpu 1 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-electra-small-ex-generator --gpu 1 --freeze --batch_size 2048

@@ -1,0 +1,15 @@
+#!/bin/bash
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/bert-base-chinese --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/ckiplab_albert-tiny-chinese --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/ckiplab_bert-base-chinese --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_albert_chinese_small --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_albert_chinese_tiny --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_roberta_chinese_3L312_clue_tiny --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_roberta_chinese_3L768_clue_tiny --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_roberta_chinese_base --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_roberta_chinese_clue_large --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_roberta_chinese_clue_tiny --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_roberta_chinese_large --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_roberta_chinese_pair_large --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_roberta_chinese_pair_tiny --gpu 0 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_xlnet_chinese_large --gpu 0 --freeze --batch_size 2048

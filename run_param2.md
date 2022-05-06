@@ -149,9 +149,6 @@ nohup python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_da
 nohup python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_xlnet_chinese_large --gpu 1 > nohup_clue_xlnet_chinese_large.out 2>&1 &     dev acc=%  test acc=%
 nohup python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/clue_xlnet_chinese_large --gpu 1 --freeze > nohup_clue_xlnet_chinese_large_freeze.out 2>&1 &     dev acc=%  test acc=%
 
-nohup python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/fnlp_bart-base-chinese --gpu 1 > nohup_fnlp_bart-base-chinese.out 2>&1 &     dev acc=%  test acc=%
-nohup python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/fnlp_bart-base-chinese --gpu 1 --freeze > nohup_fnlp_bart-base-chinese_freeze.out 2>&1 &     dev acc=%  test acc=%
-
 nohup python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-bert-wwm --gpu 1 > nohup_hfl_chinese-bert-wwm.out 2>&1 &     dev acc=%  test acc=%
 nohup python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-bert-wwm --gpu 1 --freeze > nohup_hfl_chinese-bert-wwm_freeze.out 2>&1 &     dev acc=%  test acc=%
 nohup python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/hfl_chinese-bert-wwm-ext --gpu 1 > nohup_hfl_chinese-bert-wwm-ext.out 2>&1 &     dev acc=%  test acc=%

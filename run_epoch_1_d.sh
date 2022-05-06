@@ -1,0 +1,7 @@
+#!/bin/bash
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/junnyu_roformer_chinese_sim_char_ft_small --gpu 3 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/luhua_chinese_pretrain_mrc_macbert_large --gpu 3 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/luhua_chinese_pretrain_mrc_roberta_wwm_ext_large --gpu 3 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/peterchou_nezha-chinese-base --gpu 3 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/uer_chinese_roberta_L-4_H-512 --gpu 3 --freeze --batch_size 2048 &&
+python -u run_fine_tuning_huggingface_models.py --model_name /data0/nfs_data/zhaoxi9/pretrained_language_model/huggingface_pretrained_models/uer_roberta-base-finetuned-jd-full-chinese --gpu 3 --freeze --batch_size 2048
