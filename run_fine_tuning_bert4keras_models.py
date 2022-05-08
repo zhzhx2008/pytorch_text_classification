@@ -82,17 +82,17 @@ def cal_sent_len(sentences, max_len_required=0.9997):
 parser = argparse.ArgumentParser()
 parser.add_argument('--seed', default=2022, type=int)
 parser.add_argument("--gpu", default="", type=str)
-parser.add_argument('--batch_size', default=256, type=int)
+parser.add_argument('--batch_size', default=4, type=int)
 parser.add_argument('--epochs', default=10000, type=int)
 parser.add_argument('--patience', default=5, type=int)
 parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
 parser.add_argument('--max_sent_len', type=int)
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--freeze', action='store_true')
-parser.add_argument("--model_type", default="bert", type=str)
-parser.add_argument("--config_path", default='', type=str)
-parser.add_argument("--checkpoint_path", default='', type=str)
-parser.add_argument("--vocab_path", default='', type=str)
+parser.add_argument("--model_type", default="albert", type=str)
+parser.add_argument("--config_path", default='/Users/chang/workspace_of_python/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/albert_config.json', type=str)
+parser.add_argument("--checkpoint_path", default='/Users/chang/workspace_of_python/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/albert_model.ckpt', type=str)
+parser.add_argument("--vocab_path", default='/Users/chang/workspace_of_python/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/vocab.txt', type=str)
 parser.add_argument('--dropout', default=0.5, type=float)
 args, _ = parser.parse_known_args()
 print(args)
@@ -104,7 +104,7 @@ batch_size = args.batch_size
 epochs = args.epochs
 patience = args.patience
 max_sent_len_ratio = args.max_sent_len_ratio
-max_sent_len = args.max_sent_len
+# max_sent_len = args.max_sent_len
 learning_rate = args.learning_rate
 freeze = args.freeze
 model_type = args.model_type
@@ -161,9 +161,9 @@ print('index_labels_dict={}'.format(index_labels_dict))
 y_train_index = [labels_index_dict[x] for x in labels_train]
 y_dev_index = [labels_index_dict[x] for x in labels_dev]
 y_test_index = [labels_index_dict[x] for x in labels_test]
-y_train_index = to_categorical(y_train_index, num_classes)
-y_dev_index = to_categorical(y_dev_index, num_classes)
-y_test_index = to_categorical(y_test_index, num_classes)
+y_train_index = to_categorical(y_train_index, num_classes).tolist()
+y_dev_index = to_categorical(y_dev_index, num_classes).tolist()
+y_test_index = to_categorical(y_test_index, num_classes).tolist()
 
 data_train_text_label = [(x, y) for x,y in zip(data_train, y_train_index)]
 data_dev_text_label = [(x, y) for x,y in zip(data_dev, y_dev_index)]
@@ -183,9 +183,9 @@ print('max_sent_len={}'.format(max_sent_len))
 if max_sent_len_ratio and 0 < max_sent_len_ratio < 1:
     max_sent_len = cal_sent_len(data_train_index, max_sent_len_ratio)
     print('max_sent_len={}'.format(max_sent_len))
-if max_sent_len:
-    max_sent_len = max_sent_len
-    print('max_sent_len={}'.format(max_sent_len))
+if args.max_sent_len:
+    max_sent_len = args.max_sent_len
+    print('args.max_sent_len is not None, max_sent_len={}'.format(max_sent_len))
 # exit(0)
 
 class data_generator(DataGenerator):
@@ -196,7 +196,8 @@ class data_generator(DataGenerator):
             token_ids, segment_ids = tokenizer.encode(text, max_length=max_sent_len)
             batch_token_ids.append(token_ids)
             batch_segment_ids.append(segment_ids)
-            batch_labels.append([label])
+            # batch_labels.append([label])
+            batch_labels.append(label)  # label已经是list了，不用加[]
             if len(batch_token_ids) == self.batch_size or is_end:
                 batch_token_ids = sequence_padding(batch_token_ids)
                 batch_segment_ids = sequence_padding(batch_segment_ids)
@@ -223,14 +224,20 @@ output = Dense(
 model = keras.models.Model(bert.model.input, output)
 model.summary()
 
+# 查看可/不可训练层
+for layer in model.layers:
+    print(layer, layer.trainable)
+
+# 使用如下方法冻结所有层
 for layer in model.layers:
     layer.trainable = False
-# 或者使用如下方法冻结所有层
-# model.trainable = False
 model.layers[-1].trainable = True
 model.layers[-2].trainable = True
 model.layers[-3].trainable = True
 
+# 查看可/不可训练层
+for layer in model.layers:
+    print(layer, layer.trainable)
 
 # 可训练层
 print('trainable layers:')
@@ -240,15 +247,15 @@ for x in model.trainable_weights:
 print('untrainable layers:')
 for x in model.non_trainable_weights:
     print(x.name)
-for layer in model.layers:
-    print(layer, layer.trainable)
 
 # # 派生为带分段线性学习率的优化器。
 # # 其中name参数可选，但最好填入，以区分不同的派生优化器。
 # AdamLR = extend_with_piecewise_linear_lr(Adam, name='AdamLR')
 
+# categorical_crossentropy, 每个样本的标签为一个one-hot向量，如样本1属于第3类，一共有3类，则样本1的标签为[0,0,1]
+# sparse_categorical_crossentropy, 每个样本的标签为一个整数值，如样本1属于第3类，则样本1的标签为3
 model.compile(
-    loss='sparse_categorical_crossentropy',
+    loss='categorical_crossentropy',
     optimizer=Adam(learning_rate),  # 用足够小的学习率
     # optimizer=AdamLR(learning_rate=1e-4, lr_schedule={
     #     1000: 1,
@@ -303,6 +310,8 @@ class Evaluator(keras.callbacks.Callback):
 
 evaluator = Evaluator()
 
+
+# keras==2.2.4要将model.fit改为model.fit_generator
 model.fit(
     train_generator.forfit(),
     steps_per_epoch=len(train_generator),
