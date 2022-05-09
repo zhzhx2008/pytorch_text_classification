@@ -5,11 +5,15 @@ import codecs
 import copy
 import json
 import os
+os.environ['TF_KERAS'] = '1'
 import random
 import time
 import warnings
 
 import numpy as np
+import tensorflow as tf
+import tensorflow.keras as keras
+import bert4keras
 from bert4keras.backend import K
 from bert4keras.backend import keras, set_gelu
 from bert4keras.models import build_transformer_model
@@ -18,7 +22,11 @@ from bert4keras.snippets import sequence_padding, DataGenerator
 from bert4keras.tokenizers import Tokenizer
 from keras.layers import Lambda, Dense, Dropout
 from sklearn.model_selection import train_test_split
-from tensorflow import set_random_seed
+# from tensorflow import set_random_seed
+
+print(tf.__version__)
+print(keras.__version__)
+print(bert4keras.__version__)
 
 warnings.filterwarnings("ignore")
 set_gelu('tanh')  # 切换gelu版本
@@ -82,7 +90,7 @@ def cal_sent_len(sentences, max_len_required=0.9997):
 parser = argparse.ArgumentParser()
 parser.add_argument('--seed', default=2022, type=int)
 parser.add_argument("--gpu", default="", type=str)
-parser.add_argument('--batch_size', default=4, type=int)
+parser.add_argument('--batch_size', default=64, type=int)
 parser.add_argument('--epochs', default=10000, type=int)
 parser.add_argument('--patience', default=5, type=int)
 parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
@@ -90,9 +98,15 @@ parser.add_argument('--max_sent_len', type=int)
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--freeze', action='store_true')
 parser.add_argument("--model_type", default="albert", type=str)
-parser.add_argument("--config_path", default='/Users/chang/workspace_of_python/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/albert_config.json', type=str)
-parser.add_argument("--checkpoint_path", default='/Users/chang/workspace_of_python/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/albert_model.ckpt', type=str)
-parser.add_argument("--vocab_path", default='/Users/chang/workspace_of_python/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/vocab.txt', type=str)
+parser.add_argument("--config_path", type=str)
+parser.add_argument("--checkpoint_path", type=str)
+parser.add_argument("--vocab_path", type=str)
+# parser.add_argument("--config_path", default='/Users/chang/workspace_of_python/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/albert_config.json', type=str)
+# parser.add_argument("--checkpoint_path", default='/Users/chang/workspace_of_python/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/albert_model.ckpt', type=str)
+# parser.add_argument("--vocab_path", default='/Users/chang/workspace_of_python/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/vocab.txt', type=str)
+# parser.add_argument("--config_path", default=r'D:\workspace_of_python\pretrained_language_model\albert_zh\albert_tiny_google_zh_489k\albert_config.json', type=str)
+# parser.add_argument("--checkpoint_path", default=r'D:\workspace_of_python\pretrained_language_model\albert_zh\albert_tiny_google_zh_489k\albert_model.ckpt', type=str)
+# parser.add_argument("--vocab_path", default=r'D:\workspace_of_python\pretrained_language_model\albert_zh\albert_tiny_google_zh_489k\vocab.txt', type=str)
 parser.add_argument('--dropout', default=0.5, type=float)
 args, _ = parser.parse_known_args()
 print(args)
@@ -119,7 +133,8 @@ if not model_type:
 
 random.seed(seed)
 np.random.seed(seed)
-set_random_seed(seed)
+# set_random_seed(seed)     # tf1
+tf.random.set_seed(seed)    # tf2
 
 os.environ["CUDA_VISIBLE_DEVICES"] = gpu
 
@@ -193,7 +208,7 @@ class data_generator(DataGenerator):
         random = False
         batch_token_ids, batch_segment_ids, batch_labels = [], [], []
         for is_end, (text, label) in self.sample(random):
-            token_ids, segment_ids = tokenizer.encode(text, max_length=max_sent_len)
+            token_ids, segment_ids = tokenizer.encode(text, maxlen=max_sent_len)
             batch_token_ids.append(token_ids)
             batch_segment_ids.append(segment_ids)
             # batch_labels.append([label])
@@ -227,26 +242,30 @@ model.summary()
 # 查看可/不可训练层
 for layer in model.layers:
     print(layer, layer.trainable)
+print('='*50)
 
 # 使用如下方法冻结所有层
-for layer in model.layers:
-    layer.trainable = False
-model.layers[-1].trainable = True
-model.layers[-2].trainable = True
-model.layers[-3].trainable = True
+if freeze:
+    for layer in model.layers:
+        layer.trainable = False
+    model.layers[-1].trainable = True
+    model.layers[-2].trainable = True
+    model.layers[-3].trainable = True
 
+model.summary()
 # 查看可/不可训练层
 for layer in model.layers:
     print(layer, layer.trainable)
+print('='*50)
 
-# 可训练层
-print('trainable layers:')
-for x in model.trainable_weights:
-    print(x.name)
-# 不可训练层
-print('untrainable layers:')
-for x in model.non_trainable_weights:
-    print(x.name)
+# # 可训练层
+# print('trainable layers:')
+# for x in model.trainable_weights:
+#     print(x.name)
+# # 不可训练层
+# print('untrainable layers:')
+# for x in model.non_trainable_weights:
+#     print(x.name)
 
 # # 派生为带分段线性学习率的优化器。
 # # 其中name参数可选，但最好填入，以区分不同的派生优化器。
@@ -270,45 +289,54 @@ valid_generator = data_generator(data_dev_text_label, batch_size)
 test_generator = data_generator(data_test_text_label, batch_size)
 
 
-def evaluate(data):
-    total, right = 0., 0.
-    for x_true, y_true in data:
-        y_pred = model.predict(x_true).argmax(axis=1)
-        y_true = y_true[:, 0]
-        total += len(y_true)
-        right += (y_true == y_pred).sum()
-    return right / total
+# def evaluate(data):
+#     total, right = 0., 0.
+#     for x_true, y_true in data:
+#         y_pred = model.predict(x_true).argmax(axis=1)
+#         y_true = y_true[:, 0]
+#         total += len(y_true)
+#         right += (y_true == y_pred).sum()
+#     return right * 1.0 / total
 
 
 class Evaluator(keras.callbacks.Callback):
     """评估与保存
     """
 
-    def __init__(self, patience=0):
+    def __init__(self, patience=5):
         self.best_val_acc = 0.
         self.patience = patience
         self.wait = 0
         self.stopped_epoch = 0
         super(Evaluator, self).__init__()
 
+    def evaluate(self, data_generator):
+        total, right = 0., 0.
+        for x_true, y_true in data_generator:
+            y_pred = self.model.predict(x_true).argmax(axis=1)
+            y_true = y_true[:, 0]
+            total += len(y_true)
+            right += (y_true == y_pred).sum()
+        return right * 1.0 / total
+
     def on_epoch_end(self, epoch, logs=None):
-        train_acc = evaluate(train_generator)
-        val_acc = evaluate(valid_generator)
+        train_acc = self.evaluate(train_generator)
+        val_acc = self.evaluate(valid_generator)
+        print('train acc={:.2f}%, dev acc={:.2f}%'.format(train_acc * 100.0, val_acc * 100.0))
         if val_acc > self.best_val_acc:
             self.best_val_acc = val_acc
             # model.save_weights('best_model.weights')
             self.wait = 0
-            test_acc = evaluate(test_generator)
-            print('test acc={:.2f}%'.format(test_acc))
+            test_acc = self.evaluate(test_generator)
+            print('test acc={:.2f}%'.format(test_acc * 100.0))
         else:
             self.wait += 1
             if self.wait >= self.patience:
                 self.stopped_epoch = epoch
                 self.model.stop_training = True
-        print('train acc={:.2f}%, dev acc={:.2f}%'.format(train_acc, val_acc))
 
 
-evaluator = Evaluator()
+evaluator = Evaluator(patience=patience)
 
 
 # keras==2.2.4要将model.fit改为model.fit_generator
@@ -322,3 +350,6 @@ model.fit(
 
 end_time = time.time()
 print('time used={:.1f}s'.format(end_time - start_time))
+
+# batc_size=64
+# batc_size=2048
