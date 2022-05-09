@@ -13,14 +13,15 @@ import warnings
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 import bert4keras
 from bert4keras.backend import K
-from bert4keras.backend import keras, set_gelu
+from bert4keras.backend import set_gelu
 from bert4keras.models import build_transformer_model
 from bert4keras.optimizers import Adam
 from bert4keras.snippets import sequence_padding, DataGenerator
 from bert4keras.tokenizers import Tokenizer
-from keras.layers import Lambda, Dense, Dropout
+from tensorflow.keras.layers import Lambda, Dense, Dropout
 from sklearn.model_selection import train_test_split
 # from tensorflow import set_random_seed
 
@@ -92,7 +93,7 @@ parser.add_argument('--seed', default=2022, type=int)
 parser.add_argument("--gpu", default="", type=str)
 parser.add_argument('--batch_size', default=64, type=int)
 parser.add_argument('--epochs', default=10000, type=int)
-parser.add_argument('--patience', default=5, type=int)
+parser.add_argument('--patience', default=3, type=int)
 parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
 parser.add_argument('--max_sent_len', type=int)
 parser.add_argument('--learning_rate', default=1e-3, type=float)
@@ -208,7 +209,8 @@ class data_generator(DataGenerator):
         random = False
         batch_token_ids, batch_segment_ids, batch_labels = [], [], []
         for is_end, (text, label) in self.sample(random):
-            token_ids, segment_ids = tokenizer.encode(text, maxlen=max_sent_len)
+            token_ids, segment_ids = tokenizer.encode(text, maxlen=max_sent_len)      # tf2
+            # token_ids, segment_ids = tokenizer.encode(text, max_length=max_sent_len)    # tf1
             batch_token_ids.append(token_ids)
             batch_segment_ids.append(segment_ids)
             # batch_labels.append([label])
@@ -336,20 +338,57 @@ class Evaluator(keras.callbacks.Callback):
                 self.model.stop_training = True
 
 
-evaluator = Evaluator(patience=patience)
+# evaluator = Evaluator(patience=patience)
+model_weight_file = './temp_model.h5'
+early_stopping = EarlyStopping(monitor='val_accuracy', patience=patience)
+model_checkpoint = ModelCheckpoint(model_weight_file, save_best_only=True, save_weights_only=True)
 
 
 # keras==2.2.4要将model.fit改为model.fit_generator
 model.fit(
     train_generator.forfit(),
     steps_per_epoch=len(train_generator),
+    validation_data=valid_generator.forfit(),
+    validation_steps=len(valid_generator),
     epochs=epochs,
     verbose=2,
-    callbacks=[evaluator]
+    callbacks=[early_stopping, model_checkpoint]
 )
+
+model.load_weights(model_weight_file)
+print(model.evaluate_generator(train_generator.forfit(), steps=len(train_generator), verbose=0))
+print(model.evaluate_generator(valid_generator.forfit(), steps=len(valid_generator), verbose=0))
+print(model.evaluate_generator(test_generator.forfit(), steps=len(test_generator), verbose=0))
+
+total, right = 0., 0.
+for x_true, y_true in train_generator:
+    y_pred = model.predict(x_true).argmax(axis=1)
+    y_true = y_true.argmax(axis=1)
+    total += len(y_true)
+    right += (y_true == y_pred).sum()
+print(right * 1.0 / total)
+
+total, right = 0., 0.
+for x_true, y_true in valid_generator:
+    y_pred = model.predict(x_true).argmax(axis=1)
+    y_true = y_true.argmax(axis=1)
+    total += len(y_true)
+    right += (y_true == y_pred).sum()
+print(right * 1.0 / total)
+
+total, right = 0., 0.
+for x_true, y_true in test_generator:
+    y_pred = model.predict(x_true).argmax(axis=1)
+    y_true = y_true.argmax(axis=1)
+    total += len(y_true)
+    right += (y_true == y_pred).sum()
+print(right * 1.0 / total)
 
 end_time = time.time()
 print('time used={:.1f}s'.format(end_time - start_time))
 
 # batc_size=64
 # batc_size=2048
+
+
+# python -u run_fine_tuning_bert4keras_models.py --model_type albert --config_path /data0/nfs_data/zhaoxi9/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/albert_config.json --checkpoint_path /data0/nfs_data/zhaoxi9/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/albert_model.ckpt --vocab_path /data0/nfs_data/zhaoxi9/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/vocab.txt --gpu 2 --freeze --batch_size 20480 --epochs 5
