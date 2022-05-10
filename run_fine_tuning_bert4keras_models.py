@@ -93,12 +93,12 @@ parser.add_argument('--seed', default=2022, type=int)
 parser.add_argument("--gpu", default="", type=str)
 parser.add_argument('--batch_size', default=64, type=int)
 parser.add_argument('--epochs', default=10000, type=int)
-parser.add_argument('--patience', default=3, type=int)
+parser.add_argument('--patience', default=5, type=int)
 parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
 parser.add_argument('--max_sent_len', type=int)
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--freeze', action='store_true')
-parser.add_argument("--model_type", default="albert", type=str)
+parser.add_argument("--model_type", type=str)
 parser.add_argument("--config_path", type=str)
 parser.add_argument("--checkpoint_path", type=str)
 parser.add_argument("--vocab_path", type=str)
@@ -239,12 +239,12 @@ output = Dense(
 )(output)
 
 model = keras.models.Model(bert.model.input, output)
-model.summary()
+# model.summary()
 
-# 查看可/不可训练层
-for layer in model.layers:
-    print(layer, layer.trainable)
-print('='*50)
+# # 查看可/不可训练层
+# for layer in model.layers:
+#     print(layer, layer.trainable)
+# print('='*50)
 
 # 使用如下方法冻结所有层
 if freeze:
@@ -255,10 +255,10 @@ if freeze:
     model.layers[-3].trainable = True
 
 model.summary()
-# 查看可/不可训练层
-for layer in model.layers:
-    print(layer, layer.trainable)
-print('='*50)
+# # 查看可/不可训练层
+# for layer in model.layers:
+#     print(layer, layer.trainable)
+# print('='*50)
 
 # # 可训练层
 # print('trainable layers:')
@@ -316,15 +316,15 @@ class Evaluator(keras.callbacks.Callback):
         total, right = 0., 0.
         for x_true, y_true in data_generator:
             y_pred = self.model.predict(x_true).argmax(axis=1)
-            y_true = y_true[:, 0]
+            y_true = y_true.argmax(axis=1)
             total += len(y_true)
             right += (y_true == y_pred).sum()
         return right * 1.0 / total
 
     def on_epoch_end(self, epoch, logs=None):
-        train_acc = self.evaluate(train_generator)
+        # train_acc = self.evaluate(train_generator)
         val_acc = self.evaluate(valid_generator)
-        print('train acc={:.2f}%, dev acc={:.2f}%'.format(train_acc * 100.0, val_acc * 100.0))
+        print('dev acc={:.2f}%'.format(val_acc * 100.0))
         if val_acc > self.best_val_acc:
             self.best_val_acc = val_acc
             # model.save_weights('best_model.weights')
@@ -338,51 +338,51 @@ class Evaluator(keras.callbacks.Callback):
                 self.model.stop_training = True
 
 
-# evaluator = Evaluator(patience=patience)
-model_weight_file = './temp_model.h5'
-early_stopping = EarlyStopping(monitor='val_accuracy', patience=patience)
-model_checkpoint = ModelCheckpoint(model_weight_file, save_best_only=True, save_weights_only=True)
+evaluator = Evaluator(patience=patience)
+# model_weight_file = './temp_model.h5'
+# early_stopping = EarlyStopping(monitor='val_accuracy', patience=patience)
+# model_checkpoint = ModelCheckpoint(model_weight_file, save_best_only=True, save_weights_only=True)
 
 
 # keras==2.2.4要将model.fit改为model.fit_generator
 model.fit(
     train_generator.forfit(),
     steps_per_epoch=len(train_generator),
-    validation_data=valid_generator.forfit(),
-    validation_steps=len(valid_generator),
+    # validation_data=valid_generator.forfit(),
+    # validation_steps=len(valid_generator),
     epochs=epochs,
     verbose=2,
-    callbacks=[early_stopping, model_checkpoint]
+    callbacks=[evaluator]
 )
 
-model.load_weights(model_weight_file)
-print(model.evaluate_generator(train_generator.forfit(), steps=len(train_generator), verbose=0))
-print(model.evaluate_generator(valid_generator.forfit(), steps=len(valid_generator), verbose=0))
-print(model.evaluate_generator(test_generator.forfit(), steps=len(test_generator), verbose=0))
+# model.load_weights(model_weight_file)
+# print(model.evaluate_generator(train_generator.forfit(), steps=len(train_generator), verbose=0))
+# print(model.evaluate_generator(valid_generator.forfit(), steps=len(valid_generator), verbose=0))
+# print(model.evaluate_generator(test_generator.forfit(), steps=len(test_generator), verbose=0))
 
-total, right = 0., 0.
-for x_true, y_true in train_generator:
-    y_pred = model.predict(x_true).argmax(axis=1)
-    y_true = y_true.argmax(axis=1)
-    total += len(y_true)
-    right += (y_true == y_pred).sum()
-print(right * 1.0 / total)
-
-total, right = 0., 0.
-for x_true, y_true in valid_generator:
-    y_pred = model.predict(x_true).argmax(axis=1)
-    y_true = y_true.argmax(axis=1)
-    total += len(y_true)
-    right += (y_true == y_pred).sum()
-print(right * 1.0 / total)
-
-total, right = 0., 0.
-for x_true, y_true in test_generator:
-    y_pred = model.predict(x_true).argmax(axis=1)
-    y_true = y_true.argmax(axis=1)
-    total += len(y_true)
-    right += (y_true == y_pred).sum()
-print(right * 1.0 / total)
+# total, right = 0., 0.
+# for x_true, y_true in train_generator:
+#     y_pred = model.predict(x_true).argmax(axis=1)
+#     y_true = y_true.argmax(axis=1)
+#     total += len(y_true)
+#     right += (y_true == y_pred).sum()
+# print(right * 1.0 / total)
+#
+# total, right = 0., 0.
+# for x_true, y_true in valid_generator:
+#     y_pred = model.predict(x_true).argmax(axis=1)
+#     y_true = y_true.argmax(axis=1)
+#     total += len(y_true)
+#     right += (y_true == y_pred).sum()
+# print(right * 1.0 / total)
+#
+# total, right = 0., 0.
+# for x_true, y_true in test_generator:
+#     y_pred = model.predict(x_true).argmax(axis=1)
+#     y_true = y_true.argmax(axis=1)
+#     total += len(y_true)
+#     right += (y_true == y_pred).sum()
+# print(right * 1.0 / total)
 
 end_time = time.time()
 print('time used={:.1f}s'.format(end_time - start_time))
