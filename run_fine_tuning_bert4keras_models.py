@@ -91,7 +91,7 @@ def cal_sent_len(sentences, max_len_required=0.9997):
 parser = argparse.ArgumentParser()
 parser.add_argument('--seed', default=2022, type=int)
 parser.add_argument("--gpu", default="", type=str)
-parser.add_argument('--batch_size', default=64, type=int)
+parser.add_argument('--batch_size', default=256, type=int)
 parser.add_argument('--epochs', default=10000, type=int)
 parser.add_argument('--patience', default=5, type=int)
 parser.add_argument('--max_sent_len_ratio', default=0.99971, type=float)
