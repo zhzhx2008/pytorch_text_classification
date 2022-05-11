@@ -137,6 +137,7 @@ np.random.seed(seed)
 # set_random_seed(seed)     # tf1
 tf.random.set_seed(seed)    # tf2
 
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = gpu
 
 start_time = time.time()
