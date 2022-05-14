@@ -109,6 +109,8 @@ parser.add_argument("--vocab_path", type=str)
 # parser.add_argument("--checkpoint_path", default=r'D:\workspace_of_python\pretrained_language_model\albert_zh\albert_tiny_google_zh_489k\albert_model.ckpt', type=str)
 # parser.add_argument("--vocab_path", default=r'D:\workspace_of_python\pretrained_language_model\albert_zh\albert_tiny_google_zh_489k\vocab.txt', type=str)
 parser.add_argument('--dropout', default=0.5, type=float)
+parser.add_argument('--r_drop', action='store_true')
+parser.add_argument('--r_drop_alpha', default=4, type=int)
 args, _ = parser.parse_known_args()
 print(args)
 # exit(0)
@@ -127,6 +129,8 @@ config_path = args.config_path
 checkpoint_path = args.checkpoint_path
 vocab_path = args.vocab_path
 dropout = args.dropout
+r_drop = args.r_drop
+r_drop_alpha = args.r_drop_alpha
 
 if not model_type:
     print('no model_type!')
@@ -212,16 +216,28 @@ class data_generator(DataGenerator):
         for is_end, (text, label) in self.sample(random):
             token_ids, segment_ids = tokenizer.encode(text, maxlen=max_sent_len)      # tf2
             # token_ids, segment_ids = tokenizer.encode(text, max_length=max_sent_len)    # tf1
-            batch_token_ids.append(token_ids)
-            batch_segment_ids.append(segment_ids)
-            # batch_labels.append([label])
-            batch_labels.append(label)  # label已经是list了，不用加[]
-            if len(batch_token_ids) == self.batch_size or is_end:
-                batch_token_ids = sequence_padding(batch_token_ids)
-                batch_segment_ids = sequence_padding(batch_segment_ids)
-                batch_labels = sequence_padding(batch_labels)
-                yield [batch_token_ids, batch_segment_ids], batch_labels
-                batch_token_ids, batch_segment_ids, batch_labels = [], [], []
+            if r_drop:
+                for i in range(2):
+                    batch_token_ids.append(token_ids)
+                    batch_segment_ids.append(segment_ids)
+                    batch_labels.append(label)
+                if len(batch_token_ids) == self.batch_size * 2 or is_end:
+                    batch_token_ids = sequence_padding(batch_token_ids)
+                    batch_segment_ids = sequence_padding(batch_segment_ids)
+                    batch_labels = sequence_padding(batch_labels)
+                    yield [batch_token_ids, batch_segment_ids], batch_labels
+                    batch_token_ids, batch_segment_ids, batch_labels = [], [], []
+            else:
+                batch_token_ids.append(token_ids)
+                batch_segment_ids.append(segment_ids)
+                # batch_labels.append([label])
+                batch_labels.append(label)  # label已经是list了，不用加[]
+                if len(batch_token_ids) == self.batch_size or is_end:
+                    batch_token_ids = sequence_padding(batch_token_ids)
+                    batch_segment_ids = sequence_padding(batch_segment_ids)
+                    batch_labels = sequence_padding(batch_labels)
+                    yield [batch_token_ids, batch_segment_ids], batch_labels
+                    batch_token_ids, batch_segment_ids, batch_labels = [], [], []
 
 
 # 加载预训练模型
@@ -274,17 +290,36 @@ model.summary()
 # # 其中name参数可选，但最好填入，以区分不同的派生优化器。
 # AdamLR = extend_with_piecewise_linear_lr(Adam, name='AdamLR')
 
+from keras.losses import kullback_leibler_divergence as kld
+def crossentropy_with_rdrop(y_true, y_pred, alpha=r_drop_alpha):
+    # y_true = K.reshape(y_true, K.shape(y_pred)[:-1])
+    # y_true = K.cast(y_true, 'int32')
+    loss1 = K.mean(K.categorical_crossentropy(y_true, y_pred))
+    loss2 = kld(y_pred[::2], y_pred[1::2]) + kld(y_pred[1::2], y_pred[::2])
+    return loss1 + K.mean(loss2) / 4 * alpha
+
 # categorical_crossentropy, 每个样本的标签为一个one-hot向量，如样本1属于第3类，一共有3类，则样本1的标签为[0,0,1]
 # sparse_categorical_crossentropy, 每个样本的标签为一个整数值，如样本1属于第3类，则样本1的标签为3
-model.compile(
-    loss='categorical_crossentropy',
-    optimizer=Adam(learning_rate),  # 用足够小的学习率
-    # optimizer=AdamLR(learning_rate=1e-4, lr_schedule={
-    #     1000: 1,
-    #     2000: 0.1
-    # }),
-    metrics=['accuracy'],
-)
+if r_drop:
+    model.compile(
+        loss=crossentropy_with_rdrop,
+        optimizer=Adam(learning_rate),  # 用足够小的学习率
+        # optimizer=AdamLR(learning_rate=1e-4, lr_schedule={
+        #     1000: 1,
+        #     2000: 0.1
+        # }),
+        metrics=['accuracy'],
+    )
+else:
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=Adam(learning_rate),  # 用足够小的学习率
+        # optimizer=AdamLR(learning_rate=1e-4, lr_schedule={
+        #     1000: 1,
+        #     2000: 0.1
+        # }),
+        metrics=['accuracy'],
+    )
 
 # 转换数据集
 train_generator = data_generator(data_train_text_label, batch_size)
@@ -388,8 +423,3 @@ model.fit(
 end_time = time.time()
 print('time used={:.1f}s'.format(end_time - start_time))
 
-# batc_size=64
-# batc_size=2048
-
-
-# python -u run_fine_tuning_bert4keras_models.py --model_type albert --config_path /data0/nfs_data/zhaoxi9/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/albert_config.json --checkpoint_path /data0/nfs_data/zhaoxi9/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/albert_model.ckpt --vocab_path /data0/nfs_data/zhaoxi9/pretrained_language_model/albert_zh/albert_tiny_google_zh_489k/vocab.txt --gpu 2 --freeze --batch_size 20480 --epochs 5
