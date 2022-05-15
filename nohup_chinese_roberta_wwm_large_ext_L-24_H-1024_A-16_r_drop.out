@@ -1,0 +1,616 @@
+nohup: ignoring input
+2.6.0
+2.6.0
+0.11.3
+Namespace(batch_size=256, checkpoint_path='/data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-BERT-wwm/chinese_roberta_wwm_large_ext_L-24_H-1024_A-16/bert_model.ckpt', config_path='/data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-BERT-wwm/chinese_roberta_wwm_large_ext_L-24_H-1024_A-16/bert_config.json', dropout=0.5, epochs=10000, freeze=True, gpu='1', learning_rate=0.001, max_sent_len=None, max_sent_len_ratio=0.99971, model_type='bert', patience=5, r_drop=True, r_drop_alpha=4, seed=2022, vocab_path='/data0/nfs_data/zhaoxi9/pretrained_language_model/Chinese-BERT-wwm/chinese_roberta_wwm_large_ext_L-24_H-1024_A-16/vocab.txt')
+loading data...
+train size=48024
+dev size=5336
+test size=10000
+labels_index_dict={'news_military': 0, 'news_culture': 1, 'news_travel': 2, 'news_finance': 3, 'news_world': 4, 'news_house': 5, 'news_agriculture': 6, 'news_sports': 7, 'news_edu': 8, 'news_stock': 9, 'news_entertainment': 10, 'news_tech': 11, 'news_story': 12, 'news_car': 13, 'news_game': 14}
+index_labels_dict={0: 'news_military', 1: 'news_culture', 2: 'news_travel', 3: 'news_finance', 4: 'news_world', 5: 'news_house', 6: 'news_agriculture', 7: 'news_sports', 8: 'news_edu', 9: 'news_stock', 10: 'news_entertainment', 11: 'news_tech', 12: 'news_story', 13: 'news_car', 14: 'news_game'}
+max_sent_len=147
+147	1
+60	1
+56	1
+55	2
+54	1
+53	1
+52	6
+51	3
+50	9
+49	7
+48	9
+47	11
+46	67
+45	11
+44	28
+43	42
+42	102
+41	97
+40	133
+39	124
+38	125
+37	176
+36	174
+35	232
+34	320
+33	610
+32	3435
+31	2667
+30	2381
+29	2218
+28	2257
+27	2157
+26	2234
+25	2196
+24	2305
+23	2329
+22	2202
+21	2220
+20	2013
+19	2272
+18	1887
+17	1977
+16	1768
+15	1598
+14	1485
+13	1197
+12	963
+11	792
+10	546
+9	331
+8	146
+7	129
+6	21
+5	1
+4	4
+max_sent_len=50
+2022-05-15 01:28:20.649083: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  SSE4.1 SSE4.2 AVX AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-05-15 01:28:21.978115: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1510] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 22139 MB memory:  -> device: 0, name: Tesla P40, pci bus id: 0000:04:00.0, compute capability: 6.1
+Model: "model_1"
+__________________________________________________________________________________________________
+Layer (type)                    Output Shape         Param #     Connected to                     
+==================================================================================================
+Input-Token (InputLayer)        [(None, None)]       0                                            
+__________________________________________________________________________________________________
+Input-Segment (InputLayer)      [(None, None)]       0                                            
+__________________________________________________________________________________________________
+Embedding-Token (Embedding)     (None, None, 1024)   21635072    Input-Token[0][0]                
+__________________________________________________________________________________________________
+Embedding-Segment (Embedding)   (None, None, 1024)   2048        Input-Segment[0][0]              
+__________________________________________________________________________________________________
+Embedding-Token-Segment (Add)   (None, None, 1024)   0           Embedding-Token[0][0]            
+                                                                 Embedding-Segment[0][0]          
+__________________________________________________________________________________________________
+Embedding-Position (PositionEmb (None, None, 1024)   524288      Embedding-Token-Segment[0][0]    
+__________________________________________________________________________________________________
+Embedding-Norm (LayerNormalizat (None, None, 1024)   2048        Embedding-Position[0][0]         
+__________________________________________________________________________________________________
+Embedding-Dropout (Dropout)     (None, None, 1024)   0           Embedding-Norm[0][0]             
+__________________________________________________________________________________________________
+Transformer-0-MultiHeadSelfAtte (None, None, 1024)   4198400     Embedding-Dropout[0][0]          
+                                                                 Embedding-Dropout[0][0]          
+                                                                 Embedding-Dropout[0][0]          
+__________________________________________________________________________________________________
+Transformer-0-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-0-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-0-MultiHeadSelfAtte (None, None, 1024)   0           Embedding-Dropout[0][0]          
+                                                                 Transformer-0-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-0-MultiHeadSelfAtte (None, None, 1024)   2048        Transformer-0-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-0-FeedForward (Feed (None, None, 1024)   8393728     Transformer-0-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-0-FeedForward-Dropo (None, None, 1024)   0           Transformer-0-FeedForward[0][0]  
+__________________________________________________________________________________________________
+Transformer-0-FeedForward-Add ( (None, None, 1024)   0           Transformer-0-MultiHeadSelfAttent
+                                                                 Transformer-0-FeedForward-Dropout
+__________________________________________________________________________________________________
+Transformer-0-FeedForward-Norm  (None, None, 1024)   2048        Transformer-0-FeedForward-Add[0][
+__________________________________________________________________________________________________
+Transformer-1-MultiHeadSelfAtte (None, None, 1024)   4198400     Transformer-0-FeedForward-Norm[0]
+                                                                 Transformer-0-FeedForward-Norm[0]
+                                                                 Transformer-0-FeedForward-Norm[0]
+__________________________________________________________________________________________________
+Transformer-1-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-1-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-1-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-0-FeedForward-Norm[0]
+                                                                 Transformer-1-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-1-MultiHeadSelfAtte (None, None, 1024)   2048        Transformer-1-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-1-FeedForward (Feed (None, None, 1024)   8393728     Transformer-1-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-1-FeedForward-Dropo (None, None, 1024)   0           Transformer-1-FeedForward[0][0]  
+__________________________________________________________________________________________________
+Transformer-1-FeedForward-Add ( (None, None, 1024)   0           Transformer-1-MultiHeadSelfAttent
+                                                                 Transformer-1-FeedForward-Dropout
+__________________________________________________________________________________________________
+Transformer-1-FeedForward-Norm  (None, None, 1024)   2048        Transformer-1-FeedForward-Add[0][
+__________________________________________________________________________________________________
+Transformer-2-MultiHeadSelfAtte (None, None, 1024)   4198400     Transformer-1-FeedForward-Norm[0]
+                                                                 Transformer-1-FeedForward-Norm[0]
+                                                                 Transformer-1-FeedForward-Norm[0]
+__________________________________________________________________________________________________
+Transformer-2-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-2-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-2-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-1-FeedForward-Norm[0]
+                                                                 Transformer-2-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-2-MultiHeadSelfAtte (None, None, 1024)   2048        Transformer-2-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-2-FeedForward (Feed (None, None, 1024)   8393728     Transformer-2-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-2-FeedForward-Dropo (None, None, 1024)   0           Transformer-2-FeedForward[0][0]  
+__________________________________________________________________________________________________
+Transformer-2-FeedForward-Add ( (None, None, 1024)   0           Transformer-2-MultiHeadSelfAttent
+                                                                 Transformer-2-FeedForward-Dropout
+__________________________________________________________________________________________________
+Transformer-2-FeedForward-Norm  (None, None, 1024)   2048        Transformer-2-FeedForward-Add[0][
+__________________________________________________________________________________________________
+Transformer-3-MultiHeadSelfAtte (None, None, 1024)   4198400     Transformer-2-FeedForward-Norm[0]
+                                                                 Transformer-2-FeedForward-Norm[0]
+                                                                 Transformer-2-FeedForward-Norm[0]
+__________________________________________________________________________________________________
+Transformer-3-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-3-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-3-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-2-FeedForward-Norm[0]
+                                                                 Transformer-3-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-3-MultiHeadSelfAtte (None, None, 1024)   2048        Transformer-3-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-3-FeedForward (Feed (None, None, 1024)   8393728     Transformer-3-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-3-FeedForward-Dropo (None, None, 1024)   0           Transformer-3-FeedForward[0][0]  
+__________________________________________________________________________________________________
+Transformer-3-FeedForward-Add ( (None, None, 1024)   0           Transformer-3-MultiHeadSelfAttent
+                                                                 Transformer-3-FeedForward-Dropout
+__________________________________________________________________________________________________
+Transformer-3-FeedForward-Norm  (None, None, 1024)   2048        Transformer-3-FeedForward-Add[0][
+__________________________________________________________________________________________________
+Transformer-4-MultiHeadSelfAtte (None, None, 1024)   4198400     Transformer-3-FeedForward-Norm[0]
+                                                                 Transformer-3-FeedForward-Norm[0]
+                                                                 Transformer-3-FeedForward-Norm[0]
+__________________________________________________________________________________________________
+Transformer-4-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-4-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-4-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-3-FeedForward-Norm[0]
+                                                                 Transformer-4-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-4-MultiHeadSelfAtte (None, None, 1024)   2048        Transformer-4-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-4-FeedForward (Feed (None, None, 1024)   8393728     Transformer-4-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-4-FeedForward-Dropo (None, None, 1024)   0           Transformer-4-FeedForward[0][0]  
+__________________________________________________________________________________________________
+Transformer-4-FeedForward-Add ( (None, None, 1024)   0           Transformer-4-MultiHeadSelfAttent
+                                                                 Transformer-4-FeedForward-Dropout
+__________________________________________________________________________________________________
+Transformer-4-FeedForward-Norm  (None, None, 1024)   2048        Transformer-4-FeedForward-Add[0][
+__________________________________________________________________________________________________
+Transformer-5-MultiHeadSelfAtte (None, None, 1024)   4198400     Transformer-4-FeedForward-Norm[0]
+                                                                 Transformer-4-FeedForward-Norm[0]
+                                                                 Transformer-4-FeedForward-Norm[0]
+__________________________________________________________________________________________________
+Transformer-5-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-5-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-5-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-4-FeedForward-Norm[0]
+                                                                 Transformer-5-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-5-MultiHeadSelfAtte (None, None, 1024)   2048        Transformer-5-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-5-FeedForward (Feed (None, None, 1024)   8393728     Transformer-5-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-5-FeedForward-Dropo (None, None, 1024)   0           Transformer-5-FeedForward[0][0]  
+__________________________________________________________________________________________________
+Transformer-5-FeedForward-Add ( (None, None, 1024)   0           Transformer-5-MultiHeadSelfAttent
+                                                                 Transformer-5-FeedForward-Dropout
+__________________________________________________________________________________________________
+Transformer-5-FeedForward-Norm  (None, None, 1024)   2048        Transformer-5-FeedForward-Add[0][
+__________________________________________________________________________________________________
+Transformer-6-MultiHeadSelfAtte (None, None, 1024)   4198400     Transformer-5-FeedForward-Norm[0]
+                                                                 Transformer-5-FeedForward-Norm[0]
+                                                                 Transformer-5-FeedForward-Norm[0]
+__________________________________________________________________________________________________
+Transformer-6-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-6-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-6-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-5-FeedForward-Norm[0]
+                                                                 Transformer-6-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-6-MultiHeadSelfAtte (None, None, 1024)   2048        Transformer-6-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-6-FeedForward (Feed (None, None, 1024)   8393728     Transformer-6-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-6-FeedForward-Dropo (None, None, 1024)   0           Transformer-6-FeedForward[0][0]  
+__________________________________________________________________________________________________
+Transformer-6-FeedForward-Add ( (None, None, 1024)   0           Transformer-6-MultiHeadSelfAttent
+                                                                 Transformer-6-FeedForward-Dropout
+__________________________________________________________________________________________________
+Transformer-6-FeedForward-Norm  (None, None, 1024)   2048        Transformer-6-FeedForward-Add[0][
+__________________________________________________________________________________________________
+Transformer-7-MultiHeadSelfAtte (None, None, 1024)   4198400     Transformer-6-FeedForward-Norm[0]
+                                                                 Transformer-6-FeedForward-Norm[0]
+                                                                 Transformer-6-FeedForward-Norm[0]
+__________________________________________________________________________________________________
+Transformer-7-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-7-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-7-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-6-FeedForward-Norm[0]
+                                                                 Transformer-7-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-7-MultiHeadSelfAtte (None, None, 1024)   2048        Transformer-7-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-7-FeedForward (Feed (None, None, 1024)   8393728     Transformer-7-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-7-FeedForward-Dropo (None, None, 1024)   0           Transformer-7-FeedForward[0][0]  
+__________________________________________________________________________________________________
+Transformer-7-FeedForward-Add ( (None, None, 1024)   0           Transformer-7-MultiHeadSelfAttent
+                                                                 Transformer-7-FeedForward-Dropout
+__________________________________________________________________________________________________
+Transformer-7-FeedForward-Norm  (None, None, 1024)   2048        Transformer-7-FeedForward-Add[0][
+__________________________________________________________________________________________________
+Transformer-8-MultiHeadSelfAtte (None, None, 1024)   4198400     Transformer-7-FeedForward-Norm[0]
+                                                                 Transformer-7-FeedForward-Norm[0]
+                                                                 Transformer-7-FeedForward-Norm[0]
+__________________________________________________________________________________________________
+Transformer-8-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-8-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-8-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-7-FeedForward-Norm[0]
+                                                                 Transformer-8-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-8-MultiHeadSelfAtte (None, None, 1024)   2048        Transformer-8-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-8-FeedForward (Feed (None, None, 1024)   8393728     Transformer-8-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-8-FeedForward-Dropo (None, None, 1024)   0           Transformer-8-FeedForward[0][0]  
+__________________________________________________________________________________________________
+Transformer-8-FeedForward-Add ( (None, None, 1024)   0           Transformer-8-MultiHeadSelfAttent
+                                                                 Transformer-8-FeedForward-Dropout
+__________________________________________________________________________________________________
+Transformer-8-FeedForward-Norm  (None, None, 1024)   2048        Transformer-8-FeedForward-Add[0][
+__________________________________________________________________________________________________
+Transformer-9-MultiHeadSelfAtte (None, None, 1024)   4198400     Transformer-8-FeedForward-Norm[0]
+                                                                 Transformer-8-FeedForward-Norm[0]
+                                                                 Transformer-8-FeedForward-Norm[0]
+__________________________________________________________________________________________________
+Transformer-9-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-9-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-9-MultiHeadSelfAtte (None, None, 1024)   0           Transformer-8-FeedForward-Norm[0]
+                                                                 Transformer-9-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-9-MultiHeadSelfAtte (None, None, 1024)   2048        Transformer-9-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-9-FeedForward (Feed (None, None, 1024)   8393728     Transformer-9-MultiHeadSelfAttent
+__________________________________________________________________________________________________
+Transformer-9-FeedForward-Dropo (None, None, 1024)   0           Transformer-9-FeedForward[0][0]  
+__________________________________________________________________________________________________
+Transformer-9-FeedForward-Add ( (None, None, 1024)   0           Transformer-9-MultiHeadSelfAttent
+                                                                 Transformer-9-FeedForward-Dropout
+__________________________________________________________________________________________________
+Transformer-9-FeedForward-Norm  (None, None, 1024)   2048        Transformer-9-FeedForward-Add[0][
+__________________________________________________________________________________________________
+Transformer-10-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-9-FeedForward-Norm[0]
+                                                                 Transformer-9-FeedForward-Norm[0]
+                                                                 Transformer-9-FeedForward-Norm[0]
+__________________________________________________________________________________________________
+Transformer-10-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-10-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-10-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-9-FeedForward-Norm[0]
+                                                                 Transformer-10-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-10-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-10-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-10-FeedForward (Fee (None, None, 1024)   8393728     Transformer-10-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-10-FeedForward-Drop (None, None, 1024)   0           Transformer-10-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-10-FeedForward-Add  (None, None, 1024)   0           Transformer-10-MultiHeadSelfAtten
+                                                                 Transformer-10-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-10-FeedForward-Norm (None, None, 1024)   2048        Transformer-10-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-11-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-10-FeedForward-Norm[0
+                                                                 Transformer-10-FeedForward-Norm[0
+                                                                 Transformer-10-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-11-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-11-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-11-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-10-FeedForward-Norm[0
+                                                                 Transformer-11-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-11-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-11-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-11-FeedForward (Fee (None, None, 1024)   8393728     Transformer-11-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-11-FeedForward-Drop (None, None, 1024)   0           Transformer-11-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-11-FeedForward-Add  (None, None, 1024)   0           Transformer-11-MultiHeadSelfAtten
+                                                                 Transformer-11-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-11-FeedForward-Norm (None, None, 1024)   2048        Transformer-11-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-12-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-11-FeedForward-Norm[0
+                                                                 Transformer-11-FeedForward-Norm[0
+                                                                 Transformer-11-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-12-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-12-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-12-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-11-FeedForward-Norm[0
+                                                                 Transformer-12-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-12-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-12-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-12-FeedForward (Fee (None, None, 1024)   8393728     Transformer-12-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-12-FeedForward-Drop (None, None, 1024)   0           Transformer-12-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-12-FeedForward-Add  (None, None, 1024)   0           Transformer-12-MultiHeadSelfAtten
+                                                                 Transformer-12-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-12-FeedForward-Norm (None, None, 1024)   2048        Transformer-12-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-13-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-12-FeedForward-Norm[0
+                                                                 Transformer-12-FeedForward-Norm[0
+                                                                 Transformer-12-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-13-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-13-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-13-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-12-FeedForward-Norm[0
+                                                                 Transformer-13-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-13-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-13-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-13-FeedForward (Fee (None, None, 1024)   8393728     Transformer-13-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-13-FeedForward-Drop (None, None, 1024)   0           Transformer-13-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-13-FeedForward-Add  (None, None, 1024)   0           Transformer-13-MultiHeadSelfAtten
+                                                                 Transformer-13-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-13-FeedForward-Norm (None, None, 1024)   2048        Transformer-13-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-14-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-13-FeedForward-Norm[0
+                                                                 Transformer-13-FeedForward-Norm[0
+                                                                 Transformer-13-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-14-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-14-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-14-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-13-FeedForward-Norm[0
+                                                                 Transformer-14-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-14-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-14-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-14-FeedForward (Fee (None, None, 1024)   8393728     Transformer-14-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-14-FeedForward-Drop (None, None, 1024)   0           Transformer-14-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-14-FeedForward-Add  (None, None, 1024)   0           Transformer-14-MultiHeadSelfAtten
+                                                                 Transformer-14-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-14-FeedForward-Norm (None, None, 1024)   2048        Transformer-14-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-15-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-14-FeedForward-Norm[0
+                                                                 Transformer-14-FeedForward-Norm[0
+                                                                 Transformer-14-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-15-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-15-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-15-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-14-FeedForward-Norm[0
+                                                                 Transformer-15-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-15-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-15-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-15-FeedForward (Fee (None, None, 1024)   8393728     Transformer-15-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-15-FeedForward-Drop (None, None, 1024)   0           Transformer-15-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-15-FeedForward-Add  (None, None, 1024)   0           Transformer-15-MultiHeadSelfAtten
+                                                                 Transformer-15-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-15-FeedForward-Norm (None, None, 1024)   2048        Transformer-15-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-16-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-15-FeedForward-Norm[0
+                                                                 Transformer-15-FeedForward-Norm[0
+                                                                 Transformer-15-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-16-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-16-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-16-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-15-FeedForward-Norm[0
+                                                                 Transformer-16-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-16-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-16-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-16-FeedForward (Fee (None, None, 1024)   8393728     Transformer-16-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-16-FeedForward-Drop (None, None, 1024)   0           Transformer-16-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-16-FeedForward-Add  (None, None, 1024)   0           Transformer-16-MultiHeadSelfAtten
+                                                                 Transformer-16-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-16-FeedForward-Norm (None, None, 1024)   2048        Transformer-16-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-17-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-16-FeedForward-Norm[0
+                                                                 Transformer-16-FeedForward-Norm[0
+                                                                 Transformer-16-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-17-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-17-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-17-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-16-FeedForward-Norm[0
+                                                                 Transformer-17-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-17-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-17-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-17-FeedForward (Fee (None, None, 1024)   8393728     Transformer-17-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-17-FeedForward-Drop (None, None, 1024)   0           Transformer-17-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-17-FeedForward-Add  (None, None, 1024)   0           Transformer-17-MultiHeadSelfAtten
+                                                                 Transformer-17-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-17-FeedForward-Norm (None, None, 1024)   2048        Transformer-17-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-18-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-17-FeedForward-Norm[0
+                                                                 Transformer-17-FeedForward-Norm[0
+                                                                 Transformer-17-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-18-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-18-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-18-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-17-FeedForward-Norm[0
+                                                                 Transformer-18-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-18-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-18-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-18-FeedForward (Fee (None, None, 1024)   8393728     Transformer-18-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-18-FeedForward-Drop (None, None, 1024)   0           Transformer-18-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-18-FeedForward-Add  (None, None, 1024)   0           Transformer-18-MultiHeadSelfAtten
+                                                                 Transformer-18-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-18-FeedForward-Norm (None, None, 1024)   2048        Transformer-18-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-19-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-18-FeedForward-Norm[0
+                                                                 Transformer-18-FeedForward-Norm[0
+                                                                 Transformer-18-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-19-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-19-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-19-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-18-FeedForward-Norm[0
+                                                                 Transformer-19-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-19-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-19-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-19-FeedForward (Fee (None, None, 1024)   8393728     Transformer-19-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-19-FeedForward-Drop (None, None, 1024)   0           Transformer-19-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-19-FeedForward-Add  (None, None, 1024)   0           Transformer-19-MultiHeadSelfAtten
+                                                                 Transformer-19-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-19-FeedForward-Norm (None, None, 1024)   2048        Transformer-19-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-20-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-19-FeedForward-Norm[0
+                                                                 Transformer-19-FeedForward-Norm[0
+                                                                 Transformer-19-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-20-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-20-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-20-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-19-FeedForward-Norm[0
+                                                                 Transformer-20-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-20-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-20-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-20-FeedForward (Fee (None, None, 1024)   8393728     Transformer-20-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-20-FeedForward-Drop (None, None, 1024)   0           Transformer-20-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-20-FeedForward-Add  (None, None, 1024)   0           Transformer-20-MultiHeadSelfAtten
+                                                                 Transformer-20-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-20-FeedForward-Norm (None, None, 1024)   2048        Transformer-20-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-21-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-20-FeedForward-Norm[0
+                                                                 Transformer-20-FeedForward-Norm[0
+                                                                 Transformer-20-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-21-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-21-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-21-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-20-FeedForward-Norm[0
+                                                                 Transformer-21-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-21-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-21-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-21-FeedForward (Fee (None, None, 1024)   8393728     Transformer-21-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-21-FeedForward-Drop (None, None, 1024)   0           Transformer-21-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-21-FeedForward-Add  (None, None, 1024)   0           Transformer-21-MultiHeadSelfAtten
+                                                                 Transformer-21-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-21-FeedForward-Norm (None, None, 1024)   2048        Transformer-21-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-22-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-21-FeedForward-Norm[0
+                                                                 Transformer-21-FeedForward-Norm[0
+                                                                 Transformer-21-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-22-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-22-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-22-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-21-FeedForward-Norm[0
+                                                                 Transformer-22-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-22-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-22-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-22-FeedForward (Fee (None, None, 1024)   8393728     Transformer-22-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-22-FeedForward-Drop (None, None, 1024)   0           Transformer-22-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-22-FeedForward-Add  (None, None, 1024)   0           Transformer-22-MultiHeadSelfAtten
+                                                                 Transformer-22-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-22-FeedForward-Norm (None, None, 1024)   2048        Transformer-22-FeedForward-Add[0]
+__________________________________________________________________________________________________
+Transformer-23-MultiHeadSelfAtt (None, None, 1024)   4198400     Transformer-22-FeedForward-Norm[0
+                                                                 Transformer-22-FeedForward-Norm[0
+                                                                 Transformer-22-FeedForward-Norm[0
+__________________________________________________________________________________________________
+Transformer-23-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-23-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-23-MultiHeadSelfAtt (None, None, 1024)   0           Transformer-22-FeedForward-Norm[0
+                                                                 Transformer-23-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-23-MultiHeadSelfAtt (None, None, 1024)   2048        Transformer-23-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-23-FeedForward (Fee (None, None, 1024)   8393728     Transformer-23-MultiHeadSelfAtten
+__________________________________________________________________________________________________
+Transformer-23-FeedForward-Drop (None, None, 1024)   0           Transformer-23-FeedForward[0][0] 
+__________________________________________________________________________________________________
+Transformer-23-FeedForward-Add  (None, None, 1024)   0           Transformer-23-MultiHeadSelfAtten
+                                                                 Transformer-23-FeedForward-Dropou
+__________________________________________________________________________________________________
+Transformer-23-FeedForward-Norm (None, None, 1024)   2048        Transformer-23-FeedForward-Add[0]
+__________________________________________________________________________________________________
+lambda (Lambda)                 (None, 1024)         0           Transformer-23-FeedForward-Norm[0
+__________________________________________________________________________________________________
+dropout (Dropout)               (None, 1024)         0           lambda[0][0]                     
+__________________________________________________________________________________________________
+dense (Dense)                   (None, 15)           15375       dropout[0][0]                    
+==================================================================================================
+Total params: 324,488,207
+Trainable params: 15,375
+Non-trainable params: 324,472,832
+__________________________________________________________________________________________________
+2022-05-15 01:28:29.747005: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:185] None of the MLIR Optimization Passes are enabled (registered 2)
+Epoch 1/10000
+188/188 - 600s - loss: 1.7875 - accuracy: 0.4975
+dev acc=55.28%
+test acc=55.59%
+Epoch 2/10000
+188/188 - 581s - loss: 1.5691 - accuracy: 0.5470
+dev acc=55.92%
+test acc=55.91%
+Epoch 3/10000
+188/188 - 580s - loss: 1.5616 - accuracy: 0.5504
+dev acc=55.90%
+Epoch 4/10000
+188/188 - 579s - loss: 1.5549 - accuracy: 0.5518
+dev acc=56.20%
+test acc=55.84%
+Epoch 5/10000
+188/188 - 579s - loss: 1.5549 - accuracy: 0.5514
+dev acc=56.00%
+Epoch 6/10000
+188/188 - 579s - loss: 1.5546 - accuracy: 0.5515
+dev acc=56.05%
+Epoch 7/10000
+188/188 - 578s - loss: 1.5552 - accuracy: 0.5518
+dev acc=56.07%
+Epoch 8/10000
+188/188 - 579s - loss: 1.5572 - accuracy: 0.5504
+dev acc=56.13%
+Epoch 9/10000
+188/188 - 579s - loss: 1.5600 - accuracy: 0.5512
+dev acc=56.05%
+time used=6446.5s
+2022-05-15 03:15:42.564275: W tensorflow/core/kernels/data/generator_dataset_op.cc:107] Error occurred when finalizing GeneratorDataset iterator: Failed precondition: Python interpreter state is not initialized. The process may be terminated.
+	 [[{{node PyFunc}}]]
